@@ -26,6 +26,25 @@ Routes to the resume-project workflow which handles:
 </execution_context>
 
 <process>
+
+**Check autonomous mode:**
+
+```bash
+AUTONOMOUS=$(cat .planning/config.json 2>/dev/null | grep -o '"autonomous"[[:space:]]*:[[:space:]]*[^,}]*' | grep -o 'true\|false' || echo "false")
+```
+
+**If AUTONOMOUS=true:**
+
+If multiple sessions exist, auto-select most recent:
+
+```
+Auto-decided: resume most recent session -- Autonomous mode, selecting latest [autonomous-defaults.md]
+```
+
+Then continue with the resume-project workflow logic.
+
+**If AUTONOMOUS=false:**
+
 **Follow the resume-project workflow** from `@~/.claude/get-shit-done/workflows/resume-project.md`.
 
 The workflow handles all resumption logic including:
