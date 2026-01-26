@@ -107,7 +107,53 @@ Phase: "API documentation"
 
 <process>
 
-<step name="validate_phase" priority="first">
+<step name="check_autonomous_mode" priority="first">
+Read autonomous mode setting:
+
+```bash
+AUTONOMOUS=$(cat .planning/config.json 2>/dev/null | grep -o '"autonomous"[[:space:]]*:[[:space:]]*[^,}]*' | grep -o 'true\|false' || echo "false")
+```
+
+**If AUTONOMOUS=true:**
+
+Discussion is inherently interactive - it gathers user vision and preferences. In autonomous mode, skip discussion and let planner use documented defaults.
+
+```
+Auto-decided: skip discussion -- Autonomous mode enabled, discussion requires human input [autonomous-defaults.md]
+```
+
+Output to user:
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ GSD ► DISCUSS SKIPPED (Autonomous Mode)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Discussion requires human input. In autonomous mode, proceed directly to planning.
+
+The planner will use:
+- REQUIREMENTS.md for feature scope
+- RESEARCH.md for implementation patterns (if exists)
+- Documented defaults for any ambiguities
+
+───────────────────────────────────────────────────────────────
+
+## ▶ Next Up
+
+/gsd:plan-phase {phase}
+
+<sub>/clear first → fresh context window</sub>
+
+───────────────────────────────────────────────────────────────
+```
+
+Exit workflow.
+
+**If AUTONOMOUS=false:**
+
+Continue to validate_phase step.
+</step>
+
+<step name="validate_phase">
 Phase number from argument (required).
 
 Load and validate:
