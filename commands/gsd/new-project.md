@@ -31,6 +31,8 @@ This is the most leveraged moment in any project. Deep questioning here means be
 
 @~/.claude/get-shit-done/references/questioning.md
 @~/.claude/get-shit-done/references/ui-brand.md
+@~/.claude/get-shit-done/references/decision-policies.md
+@~/.claude/get-shit-done/references/autonomous.md
 @~/.claude/get-shit-done/templates/project.md
 @~/.claude/get-shit-done/templates/requirements.md
 
@@ -64,6 +66,12 @@ This is the most leveraged moment in any project. Deep questioning here means be
    HAS_CODEBASE_MAP=$([ -d .planning/codebase ] && echo "yes")
    ```
 
+4. **Check autonomous mode:**
+   ```bash
+   AUTONOMOUS=$(cat .planning/config.json 2>/dev/null | grep -o '"autonomous"[[:space:]]*:[[:space:]]*[^,}]*' | grep -o 'true\|false' || echo "false")
+   ```
+   Store for use in decision points below.
+
    **You MUST run all bash commands above using the Bash tool before proceeding.**
 
 ## Phase 2: Brownfield Offer
@@ -73,6 +81,17 @@ This is the most leveraged moment in any project. Deep questioning here means be
 Check the results from setup step:
 - If `CODE_FILES` is non-empty OR `HAS_PACKAGE` is "yes"
 - AND `HAS_CODEBASE_MAP` is NOT "yes"
+
+**If AUTONOMOUS=true:**
+
+Apply POLICY-01 (Brownfield Detection):
+```
+Auto-decided: map codebase -- Code exists without map, mapping required [POLICY-01, file: {CODE_FILES first match}]
+```
+Run `/gsd:map-codebase`, then return to `/gsd:new-project`.
+Exit command.
+
+**If AUTONOMOUS=false:**
 
 Use AskUserQuestion:
 - header: "Existing Code"
@@ -398,6 +417,41 @@ Store resolved models for use in Task calls below.
 
 ## Phase 6: Research Decision
 
+**If AUTONOMOUS=true:**
+
+Apply POLICY-02 (Research Toggle):
+
+1. Check config:
+   ```bash
+   WORKFLOW_RESEARCH=$(cat .planning/config.json 2>/dev/null | grep -o '"research"[[:space:]]*:[[:space:]]*[^,}]*' | grep -o 'true\|false' || echo "true")
+   ```
+
+2. Check if greenfield:
+   ```bash
+   GREENFIELD=$([ ! -d .planning/codebase ] && echo "yes" || echo "no")
+   ```
+
+3. Apply policy:
+   - If WORKFLOW_RESEARCH=true AND GREENFIELD=yes:
+     ```
+     Auto-decided: research enabled -- Greenfield project, domain research beneficial [POLICY-02, config: workflow.research=true]
+     ```
+     Proceed to research.
+
+   - If WORKFLOW_RESEARCH=false:
+     ```
+     Auto-decided: skip research -- Research disabled in config [POLICY-02, config: workflow.research=false]
+     ```
+     Skip to Phase 7.
+
+   - If GREENFIELD=no (has codebase map):
+     ```
+     Auto-decided: skip research -- Brownfield with codebase map [POLICY-02, .planning/codebase exists]
+     ```
+     Skip to Phase 7.
+
+**If AUTONOMOUS=false:**
+
 Use AskUserQuestion:
 - header: "Research"
 - question: "Research the domain ecosystem before defining requirements?"
@@ -405,7 +459,7 @@ Use AskUserQuestion:
   - "Research first (Recommended)" — Discover standard stacks, expected features, architecture patterns
   - "Skip research" — I know this domain well, go straight to requirements
 
-**If "Research first":**
+**If "Research first" OR (AUTONOMOUS=true AND research enabled):**
 
 Display stage banner:
 ```
