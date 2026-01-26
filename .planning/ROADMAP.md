@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Inner Voice Foundation** - Config flag, decision traces, full commitment mode
 - [x] **Phase 2: Context-Aware Reasoning** - Context assembly, decision history, audit trail
 - [x] **Phase 3: Decision Policies** - Specific policies for each GSD decision type
-- [ ] **Phase 4: Workflow Integration** - Connect autonomous reasoning to all GSD workflows
+- [x] **Phase 4: Workflow Integration** - Connect autonomous reasoning to all GSD workflows
 - [ ] **Phase 5: Architecture Refactoring** - Extract monolithic files into focused modules
 - [ ] **Phase 6: Safety Features** - Rollback mechanism and plan revision
 
@@ -80,10 +80,10 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Add autonomous handling to execute-phase workflow (failure recovery, checkpoint routing)
-- [ ] 04-02-PLAN.md — Implement discuss-phase autonomous skip (exits early when autonomous enabled)
-- [ ] 04-03-PLAN.md — Add autonomous handling to new-milestone (research, roadmap approval)
-- [ ] 04-04-PLAN.md — Add autonomous handling to auxiliary workflows (discovery, debug, resume-work)
+- [x] 04-01-PLAN.md — Add autonomous handling to execute-phase workflow (failure recovery, checkpoint routing)
+- [x] 04-02-PLAN.md — Implement discuss-phase autonomous skip (exits early when autonomous enabled)
+- [x] 04-03-PLAN.md — Add autonomous handling to new-milestone (research, roadmap approval)
+- [x] 04-04-PLAN.md — Add autonomous handling to auxiliary workflows (discovery, debug, resume-work)
 
 ### Phase 5: Architecture Refactoring
 **Goal**: Large monolithic files extracted into maintainable focused modules
@@ -123,6 +123,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 1. Inner Voice Foundation | 2/2 | Complete | 2026-01-26 |
 | 2. Context-Aware Reasoning | 2/2 | Complete | 2026-01-26 |
 | 3. Decision Policies | 3/3 | Complete | 2026-01-26 |
-| 4. Workflow Integration | 0/4 | Planned | - |
+| 4. Workflow Integration | 4/4 | Complete | 2026-01-27 |
 | 5. Architecture Refactoring | 0/TBD | Not started | - |
 | 6. Safety Features | 0/TBD | Not started | - |
