@@ -25,6 +25,8 @@ Context budget: ~15% orchestrator, 100% fresh per subagent.
 <execution_context>
 @~/.claude/get-shit-done/references/ui-brand.md
 @~/.claude/get-shit-done/workflows/execute-phase.md
+@~/.claude/get-shit-done/references/autonomous.md
+@~/.claude/get-shit-done/references/decision-policies.md
 </execution_context>
 
 <context>
