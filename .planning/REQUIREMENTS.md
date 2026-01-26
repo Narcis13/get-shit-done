@@ -11,10 +11,10 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 - [x] **VOICE-01**: Config flag `autonomous: true/false` in config.json enables/disables autonomous mode
 - [x] **VOICE-02**: Decision traces output `Auto-decided: [choice] — [reason]` for every autonomous decision
-- [ ] **VOICE-03**: Context-aware decisions read PROJECT.md, REQUIREMENTS.md, research outputs, codebase state
-- [ ] **VOICE-04**: Decision history tracked within session for consistency across decisions
+- [x] **VOICE-03**: Context-aware decisions read PROJECT.md, REQUIREMENTS.md, research outputs, codebase state
+- [x] **VOICE-04**: Decision history tracked within session for consistency across decisions
 - [x] **VOICE-05**: Full commitment mode — when enabled, ALL decision points are auto-decided (no partial autonomy)
-- [ ] **VOICE-06**: Audit trail persisted to `.planning/DECISIONS.md` with timestamps, choices, reasons, context refs
+- [x] **VOICE-06**: Audit trail persisted to `.planning/DECISIONS.md` with timestamps, choices, reasons, context refs
 - [x] **VOICE-07**: Graceful degradation — use documented defaults when context insufficient, log assumptions
 
 ### Decision Policies
@@ -93,10 +93,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | VOICE-01 | Phase 1 | Complete |
 | VOICE-02 | Phase 1 | Complete |
-| VOICE-03 | Phase 2 | Pending |
-| VOICE-04 | Phase 2 | Pending |
+| VOICE-03 | Phase 2 | Complete |
+| VOICE-04 | Phase 2 | Complete |
 | VOICE-05 | Phase 1 | Complete |
-| VOICE-06 | Phase 2 | Pending |
+| VOICE-06 | Phase 2 | Complete |
 | VOICE-07 | Phase 1 | Complete |
 | POLICY-01 | Phase 3 | Pending |
 | POLICY-02 | Phase 3 | Pending |
