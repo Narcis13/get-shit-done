@@ -19,13 +19,13 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### Decision Policies
 
-- [ ] **POLICY-01**: Decision policy for brownfield detection (map codebase if code detected and no map exists)
-- [ ] **POLICY-02**: Decision policy for research toggle (research if greenfield or unfamiliar domain)
-- [ ] **POLICY-03**: Decision policy for feature scoping (table stakes + explicit PROJECT.md mentions = v1)
-- [ ] **POLICY-04**: Decision policy for roadmap approval (approve if 100% coverage, deps satisfied)
-- [ ] **POLICY-05**: Decision policy for plan approval (approve if checker passes)
-- [ ] **POLICY-06**: Decision policy for checkpoint:decision (policy-based selection from options)
-- [ ] **POLICY-07**: Decision policy for checkpoint:human-verify (auto-approve if tests pass)
+- [x] **POLICY-01**: Decision policy for brownfield detection (map codebase if code detected and no map exists)
+- [x] **POLICY-02**: Decision policy for research toggle (research if greenfield or unfamiliar domain)
+- [x] **POLICY-03**: Decision policy for feature scoping (table stakes + explicit PROJECT.md mentions = v1)
+- [x] **POLICY-04**: Decision policy for roadmap approval (approve if 100% coverage, deps satisfied)
+- [x] **POLICY-05**: Decision policy for plan approval (approve if checker passes)
+- [x] **POLICY-06**: Decision policy for checkpoint:decision (policy-based selection from options)
+- [x] **POLICY-07**: Decision policy for checkpoint:human-verify (auto-approve if tests pass)
 
 ### Workflow Integration
 
@@ -98,13 +98,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VOICE-05 | Phase 1 | Complete |
 | VOICE-06 | Phase 2 | Complete |
 | VOICE-07 | Phase 1 | Complete |
-| POLICY-01 | Phase 3 | Pending |
-| POLICY-02 | Phase 3 | Pending |
-| POLICY-03 | Phase 3 | Pending |
-| POLICY-04 | Phase 3 | Pending |
-| POLICY-05 | Phase 3 | Pending |
-| POLICY-06 | Phase 3 | Pending |
-| POLICY-07 | Phase 3 | Pending |
+| POLICY-01 | Phase 3 | Complete |
+| POLICY-02 | Phase 3 | Complete |
+| POLICY-03 | Phase 3 | Complete |
+| POLICY-04 | Phase 3 | Complete |
+| POLICY-05 | Phase 3 | Complete |
+| POLICY-06 | Phase 3 | Complete |
+| POLICY-07 | Phase 3 | Complete |
 | FLOW-01 | Phase 4 | Pending |
 | FLOW-02 | Phase 4 | Pending |
 | FLOW-03 | Phase 4 | Pending |

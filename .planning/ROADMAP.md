@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Inner Voice Foundation** - Config flag, decision traces, full commitment mode
 - [x] **Phase 2: Context-Aware Reasoning** - Context assembly, decision history, audit trail
-- [ ] **Phase 3: Decision Policies** - Specific policies for each GSD decision type
+- [x] **Phase 3: Decision Policies** - Specific policies for each GSD decision type
 - [ ] **Phase 4: Workflow Integration** - Connect autonomous reasoning to all GSD workflows
 - [ ] **Phase 5: Architecture Refactoring** - Extract monolithic files into focused modules
 - [ ] **Phase 6: Safety Features** - Rollback mechanism and plan revision
@@ -64,9 +64,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Create decision-policies.md reference with all 7 policy definitions
-- [ ] 03-02-PLAN.md — Integrate POLICY-01/02/03/04 into new-project.md
-- [ ] 03-03-PLAN.md — Integrate POLICY-05 into plan-phase.md and POLICY-06/07 references into execute-plan.md
+- [x] 03-01-PLAN.md — Create decision-policies.md reference with all 7 policy definitions
+- [x] 03-02-PLAN.md — Integrate POLICY-01/02/03/04 into new-project.md
+- [x] 03-03-PLAN.md — Integrate POLICY-05 into plan-phase.md and POLICY-06/07 references into execute-plan.md
 
 ### Phase 4: Workflow Integration
 **Goal**: All GSD workflows respect autonomous flag and route decisions appropriately
@@ -119,7 +119,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 |-------|----------------|--------|-----------|
 | 1. Inner Voice Foundation | 2/2 | Complete | 2026-01-26 |
 | 2. Context-Aware Reasoning | 2/2 | Complete | 2026-01-26 |
-| 3. Decision Policies | 0/3 | Ready to execute | - |
+| 3. Decision Policies | 3/3 | Complete | 2026-01-26 |
 | 4. Workflow Integration | 0/TBD | Not started | - |
 | 5. Architecture Refactoring | 0/TBD | Not started | - |
 | 6. Safety Features | 0/TBD | Not started | - |
