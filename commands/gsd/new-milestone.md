@@ -647,7 +647,47 @@ Success criteria:
 ---
 ```
 
-**CRITICAL: Ask for approval before committing:**
+**If AUTONOMOUS=true:**
+
+Apply POLICY-04 (Roadmap Approval):
+
+Verify coverage:
+```bash
+# Count requirements from REQUIREMENTS.md
+TOTAL_REQS=$(grep -c "^\- \[ \]" .planning/REQUIREMENTS.md 2>/dev/null || echo "0")
+# Count mapped requirements in ROADMAP.md
+MAPPED_REQS=$(grep -oE '[A-Z]+-[0-9]+' .planning/ROADMAP.md 2>/dev/null | sort -u | wc -l | tr -d ' ')
+```
+
+If 100% coverage (MAPPED_REQS >= TOTAL_REQS):
+```
+Auto-decided: approve roadmap -- 100% requirement coverage [POLICY-04, {MAPPED_REQS}/{TOTAL_REQS}]
+```
+Continue to commit.
+
+If coverage incomplete, retry once:
+- Re-spawn roadmapper with revision context:
+  ```
+  Task(prompt="
+  <revision>
+  Coverage incomplete: {MAPPED_REQS}/{TOTAL_REQS} requirements mapped.
+
+  Current ROADMAP.md: @.planning/ROADMAP.md
+  Current REQUIREMENTS.md: @.planning/REQUIREMENTS.md
+
+  Ensure all requirements are mapped to phases. Edit files in place.
+  Return ROADMAP REVISED with changes made.
+  </revision>
+  ", subagent_type="gsd-roadmapper", model="{roadmapper_model}", description="Revise roadmap")
+  ```
+- Check again
+- If still incomplete after retry: fall back to human approval
+
+```
+Auto-decided: human review needed -- Coverage incomplete after retry [POLICY-04, {MAPPED_REQS}/{TOTAL_REQS}]
+```
+
+**If AUTONOMOUS=false:**
 
 Use AskUserQuestion:
 - header: "Roadmap"
