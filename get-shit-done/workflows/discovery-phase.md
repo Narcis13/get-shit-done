@@ -33,6 +33,16 @@ See ~/.claude/get-shit-done/templates/discovery.md `<discovery_protocol>` for fu
 
 <process>
 
+<step name="check_autonomous_mode" priority="first">
+Read autonomous mode setting:
+
+```bash
+AUTONOMOUS=$(cat .planning/config.json 2>/dev/null | grep -o '"autonomous"[[:space:]]*:[[:space:]]*[^,}]*' | grep -o 'true\|false' || echo "false")
+```
+
+Store for use in confidence_gate and open_questions_gate steps below.
+</step>
+
 <step name="determine_depth">
 Check the depth parameter passed from plan-phase.md:
 - `depth=verify` → Level 1 (Quick Verification)
@@ -213,6 +223,24 @@ Write `.planning/phases/XX-name/DISCOVERY.md`:
 <step name="confidence_gate">
 After creating DISCOVERY.md, check confidence level.
 
+**If AUTONOMOUS=true:**
+
+Auto-proceed regardless of confidence level. Discovery is informational, not blocking.
+
+If confidence is LOW:
+```
+Auto-decided: proceed with low confidence -- Autonomous mode, discovery informs but doesn't block [autonomous-defaults.md]
+```
+
+If confidence is MEDIUM or HIGH:
+```
+Auto-decided: proceed -- Discovery complete ({confidence} confidence) [autonomous-defaults.md]
+```
+
+Continue to open_questions_gate.
+
+**If AUTONOMOUS=false:**
+
 If confidence is LOW:
 Use AskUserQuestion:
 
@@ -232,6 +260,18 @@ Proceed directly, just note: "Discovery complete (high confidence)."
 
 <step name="open_questions_gate">
 If DISCOVERY.md has open_questions:
+
+**If AUTONOMOUS=true:**
+
+```
+Auto-decided: proceed with open questions -- Questions logged in DISCOVERY.md for later [autonomous-defaults.md]
+```
+
+Open questions remain documented but don't block autonomous planning.
+
+Continue to offer_next.
+
+**If AUTONOMOUS=false:**
 
 Present them inline:
 "Open questions from discovery:
