@@ -154,6 +154,34 @@ Store resolved models for use in Task calls below.
 
 ## Phase 7: Research Decision
 
+**If AUTONOMOUS=true:**
+
+Apply POLICY-02 (Research Toggle):
+
+Check if research should be auto-enabled:
+```bash
+# Check config for research setting
+RESEARCH_ENABLED=$(cat .planning/config.json 2>/dev/null | grep -o '"research"[[:space:]]*:[[:space:]]*[^,}]*' | grep -o 'true\|false' || echo "true")
+```
+
+If config workflow.research=true (default for subsequent milestones with new features):
+
+```
+Auto-decided: research enabled -- Config workflow.research=true, new milestone features [POLICY-02, config: workflow.research=true]
+```
+
+Proceed to research phase (spawn researchers).
+
+If config workflow.research=false:
+
+```
+Auto-decided: skip research -- Config workflow.research=false [POLICY-02, config: workflow.research=false]
+```
+
+Skip to Phase 8 (Define Requirements).
+
+**If AUTONOMOUS=false:**
+
 Use AskUserQuestion:
 - header: "Research"
 - question: "Research the domain ecosystem for new features before defining requirements?"
@@ -161,7 +189,7 @@ Use AskUserQuestion:
   - "Research first (Recommended)" — Discover patterns, expected features, architecture for NEW capabilities
   - "Skip research" — I know what I need, go straight to requirements
 
-**If "Research first":**
+**If "Research first" OR (AUTONOMOUS=true AND research enabled):**
 
 Display stage banner:
 ```
