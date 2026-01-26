@@ -749,6 +749,50 @@ For each capability mentioned:
 
 **Scope each category:**
 
+**If AUTONOMOUS=true:**
+
+Apply POLICY-03 (Feature Scoping) for each feature identified:
+
+1. Check if table stakes (from FEATURES.md):
+   ```bash
+   # Extract Table stakes section and check for feature
+   TABLE_STAKES=$(sed -n '/Table stakes:/,/Differentiators:/p' .planning/research/FEATURES.md 2>/dev/null | head -n -1)
+   IS_TABLE_STAKES=$(echo "$TABLE_STAKES" | grep -qi "[feature]" && echo "yes" || echo "no")
+   ```
+
+2. Check if in PROJECT.md:
+   ```bash
+   IN_PROJECT=$(grep -qi "[feature]" .planning/PROJECT.md 2>/dev/null && echo "yes" || echo "no")
+   ```
+
+3. Check if differentiator (from FEATURES.md):
+   ```bash
+   DIFFERENTIATORS=$(sed -n '/Differentiators:/,/Anti-features:/p' .planning/research/FEATURES.md 2>/dev/null)
+   IS_DIFFERENTIATOR=$(echo "$DIFFERENTIATORS" | grep -qi "[feature]" && echo "yes" || echo "no")
+   ```
+
+4. Apply policy for each feature:
+   - If IS_TABLE_STAKES=yes OR IN_PROJECT=yes:
+     ```
+     Auto-decided: v1 -- Table stakes feature ({feature}) [POLICY-03, FEATURES.md:Table stakes]
+     ```
+     or
+     ```
+     Auto-decided: v1 -- Explicit PROJECT.md mention ({feature}) [POLICY-03, PROJECT.md]
+     ```
+
+   - If IS_DIFFERENTIATOR=yes AND IN_PROJECT=no:
+     ```
+     Auto-decided: v2 -- Differentiator not in PROJECT.md ({feature}) [POLICY-03, FEATURES.md:Differentiators]
+     ```
+
+   - Otherwise:
+     ```
+     Auto-decided: out of scope -- Not in FEATURES.md or PROJECT.md ({feature}) [POLICY-03]
+     ```
+
+**If AUTONOMOUS=false:**
+
 For each category, use AskUserQuestion:
 
 - header: "[Category name]"
@@ -930,7 +974,53 @@ Success criteria:
 ---
 ```
 
-**CRITICAL: Ask for approval before committing:**
+**Roadmap Approval:**
+
+**If AUTONOMOUS=true:**
+
+Apply POLICY-04 (Roadmap Approval):
+
+1. Check for unmapped requirements:
+   ```bash
+   UNMAPPED=$(grep -c "Pending" .planning/REQUIREMENTS.md 2>/dev/null || echo "0")
+   ```
+
+2. Count mapped vs total:
+   ```bash
+   V1_COUNT=$(grep -c "^\- \[ \] \*\*" .planning/REQUIREMENTS.md 2>/dev/null || echo "0")
+   MAPPED_COUNT=$(grep -c "Phase [0-9]" .planning/REQUIREMENTS.md 2>/dev/null || echo "0")
+   ```
+
+3. Apply policy:
+   - If UNMAPPED=0 AND MAPPED_COUNT >= V1_COUNT:
+     ```
+     Auto-decided: approve roadmap -- 100% requirement coverage, deps satisfied [POLICY-04, {MAPPED_COUNT}/{V1_COUNT} requirements mapped]
+     ```
+     Proceed to commit.
+
+   - If UNMAPPED > 0 or coverage incomplete:
+     ```
+     Auto-decided: request revision -- Incomplete coverage ({UNMAPPED} unmapped) [POLICY-04]
+     ```
+     Re-spawn roadmapper with revision context (up to 2 iterations):
+     ```
+     Task(prompt="
+     <revision>
+     Incomplete coverage detected:
+     - Unmapped requirements: {UNMAPPED}
+     - Mapped: {MAPPED_COUNT}/{V1_COUNT}
+
+     Current ROADMAP.md: @.planning/ROADMAP.md
+     Current REQUIREMENTS.md: @.planning/REQUIREMENTS.md
+
+     Ensure all v1 requirements are mapped to phases. Update files in place.
+     Return ROADMAP REVISED with changes made.
+     </revision>
+     ", subagent_type="gsd-roadmapper", model="{roadmapper_model}", description="Revise roadmap")
+     ```
+     After 2 failed iterations, fall back to human review.
+
+**If AUTONOMOUS=false:**
 
 Use AskUserQuestion:
 - header: "Roadmap"
