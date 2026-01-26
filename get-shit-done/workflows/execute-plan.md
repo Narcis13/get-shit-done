@@ -1261,6 +1261,26 @@ If any task verification fails:
 
 STOP. Do not continue to next task.
 
+### Autonomous Verification Failure Handling
+
+**If AUTONOMOUS=true and task verification fails:**
+
+1. Analyze failure output to determine if recoverable
+2. If recoverable (syntax error, missing import, typo):
+   ```
+   Auto-decided: retry — Verification failed due to [issue], attempting fix
+   ```
+   Apply fix and retry (max 2 retries).
+3. If not recoverable after retries or issue is unclear:
+   ```
+   Autonomous mode: Verification failed for [task], falling back to human review
+   ```
+   Present failure details and wait for user input.
+
+**If AUTONOMOUS=false:**
+
+[Interactive verification failure handling below - unchanged from original]
+
 Present inline:
 "Verification failed for Task [X]: [task name]
 
