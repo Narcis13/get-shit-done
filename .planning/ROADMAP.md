@@ -111,10 +111,11 @@ Plans:
   1. `/gsd:rollback-phase` command exists and reverts to phase start commit
   2. First commit of each phase is recorded for rollback reference
   3. Inline task modifications are possible during execution without full re-planning
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 06-01: TBD
+- [ ] 06-01-PLAN.md — Phase commit recording and /gsd:rollback-phase command (FEAT-01)
+- [ ] 06-02-PLAN.md — Inline task declaration format and SUMMARY tracking (FEAT-02)
 
 ## Progress
 
@@ -128,4 +129,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 3. Decision Policies | 3/3 | Complete | 2026-01-26 |
 | 4. Workflow Integration | 4/4 | Complete | 2026-01-27 |
 | 5. Architecture Refactoring | 4/4 | Complete | 2026-01-27 |
-| 6. Safety Features | 0/TBD | Not started | - |
+| 6. Safety Features | 0/2 | Not started | - |
