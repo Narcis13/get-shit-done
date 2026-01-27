@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Decision Policies** - Specific policies for each GSD decision type
 - [x] **Phase 4: Workflow Integration** - Connect autonomous reasoning to all GSD workflows
 - [x] **Phase 5: Architecture Refactoring** - Extract monolithic files into focused modules
-- [ ] **Phase 6: Safety Features** - Rollback mechanism and plan revision
+- [x] **Phase 6: Safety Features** - Rollback mechanism and plan revision
 
 ## Phase Details
 
@@ -114,7 +114,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 06-01-PLAN.md — Phase commit recording and /gsd:rollback-phase command (FEAT-01)
+- [x] 06-01-PLAN.md — Phase commit recording and /gsd:rollback-phase command (FEAT-01)
 - [x] 06-02-PLAN.md — Inline task declaration format and SUMMARY tracking (FEAT-02)
 
 ## Progress
@@ -129,4 +129,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 3. Decision Policies | 3/3 | Complete | 2026-01-26 |
 | 4. Workflow Integration | 4/4 | Complete | 2026-01-27 |
 | 5. Architecture Refactoring | 4/4 | Complete | 2026-01-27 |
-| 6. Safety Features | 1/2 | In progress | - |
+| 6. Safety Features | 2/2 | Complete | 2026-01-27 |
