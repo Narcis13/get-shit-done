@@ -159,6 +159,37 @@ Resume file: [Path to .continue-here*.md if exists, otherwise "None"]
 
 **When to add:** At end of every session (enables instant resumption).
 
+### Phase Commits (OPTIONAL)
+
+```markdown
+## Phase Commits
+
+| Phase | First Commit | Phase Directory | Recorded |
+|-------|--------------|-----------------|----------|
+| 01 | abc123f | 01-foundation | 2026-01-26 |
+| 02 | def456g | 02-auth | 2026-01-26 |
+```
+
+**Field specifications:**
+
+| Column | Format | Description |
+|--------|--------|-------------|
+| Phase | `NN` or `NN.N` | Phase number (integer or decimal) |
+| First Commit | 7-char hash | First commit of phase (short SHA) |
+| Phase Directory | `NN-name` | Directory name in `.planning/phases/` |
+| Recorded | `YYYY-MM-DD` | Date when commit was recorded |
+
+**When to add:** After first task commit of each phase. Execute-plan records this automatically.
+
+**Used by:** `/gsd:rollback-phase` to identify commit range for reverting phase.
+
+**Validation:**
+```bash
+# Check Phase Commits section exists and has table header
+grep -q "## Phase Commits" .planning/STATE.md && \
+grep -q "| Phase | First Commit | Phase Directory | Recorded |" .planning/STATE.md
+```
+
 ---
 
 ## Auto-Recovery Algorithm

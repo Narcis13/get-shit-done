@@ -71,6 +71,12 @@ None yet.
 Last session: [YYYY-MM-DD HH:MM]
 Stopped at: [Description of last completed action]
 Resume file: [Path to .continue-here*.md if exists, otherwise "None"]
+
+## Phase Commits
+
+| Phase | First Commit | Phase Directory | Recorded |
+|-------|--------------|-----------------|----------|
+| - | - | - | - |
 ```
 
 <purpose>
@@ -160,6 +166,15 @@ Enables instant resumption:
 - When was last session
 - What was last completed
 - Is there a .continue-here file to resume from
+
+### Phase Commits
+Records first commit of each phase for rollback capability:
+- Phase number (01, 02, etc.)
+- First commit hash (short form, 7 chars)
+- Phase directory name (for cleanup)
+- Date recorded
+
+Used by `/gsd:rollback-phase` to revert all commits in a phase.
 
 </sections>
 
