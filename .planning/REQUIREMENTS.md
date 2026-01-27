@@ -29,19 +29,19 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### Workflow Integration
 
-- [ ] **FLOW-01**: `/gsd:new-project` respects autonomous flag for all decision points
-- [ ] **FLOW-02**: `/gsd:plan-phase` respects autonomous flag for all decision points
-- [ ] **FLOW-03**: `/gsd:execute-phase` respects autonomous flag for all checkpoints
-- [ ] **FLOW-04**: All other GSD workflows check autonomous flag before AskUserQuestion
+- [x] **FLOW-01**: `/gsd:new-project` respects autonomous flag for all decision points
+- [x] **FLOW-02**: `/gsd:plan-phase` respects autonomous flag for all decision points
+- [x] **FLOW-03**: `/gsd:execute-phase` respects autonomous flag for all checkpoints
+- [x] **FLOW-04**: All other GSD workflows check autonomous flag before AskUserQuestion
 
 ### Tech Debt
 
-- [ ] **DEBT-01**: Extract gsd-planner.md (1386 lines) into focused modules
-- [ ] **DEBT-02**: Extract gsd-executor.md (784 lines) into focused modules
-- [ ] **DEBT-03**: Extract execute-plan.md workflow (1844 lines) into focused modules
-- [ ] **DEBT-04**: State file schema validation — define required fields and structure
-- [ ] **DEBT-05**: State file auto-recovery — reconstruct STATE.md from ROADMAP.md if missing
-- [ ] **DEBT-06**: Atomic JSON operations — write-temp, verify, move pattern for config.json edits
+- [x] **DEBT-01**: Extract gsd-planner.md (1386 lines) into focused modules
+- [x] **DEBT-02**: Extract gsd-executor.md (784 lines) into focused modules
+- [x] **DEBT-03**: Extract execute-plan.md workflow (1844 lines) into focused modules
+- [x] **DEBT-04**: State file schema validation — define required fields and structure
+- [x] **DEBT-05**: State file auto-recovery — reconstruct STATE.md from ROADMAP.md if missing
+- [x] **DEBT-06**: Atomic JSON operations — write-temp, verify, move pattern for config.json edits
 
 ### Missing Features
 
@@ -105,16 +105,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 | POLICY-05 | Phase 3 | Complete |
 | POLICY-06 | Phase 3 | Complete |
 | POLICY-07 | Phase 3 | Complete |
-| FLOW-01 | Phase 4 | Pending |
-| FLOW-02 | Phase 4 | Pending |
-| FLOW-03 | Phase 4 | Pending |
-| FLOW-04 | Phase 4 | Pending |
-| DEBT-01 | Phase 5 | Pending |
-| DEBT-02 | Phase 5 | Pending |
-| DEBT-03 | Phase 5 | Pending |
-| DEBT-04 | Phase 5 | Pending |
-| DEBT-05 | Phase 5 | Pending |
-| DEBT-06 | Phase 5 | Pending |
+| FLOW-01 | Phase 4 | Complete |
+| FLOW-02 | Phase 4 | Complete |
+| FLOW-03 | Phase 4 | Complete |
+| FLOW-04 | Phase 4 | Complete |
+| DEBT-01 | Phase 5 | Complete |
+| DEBT-02 | Phase 5 | Complete |
+| DEBT-03 | Phase 5 | Complete |
+| DEBT-04 | Phase 5 | Complete |
+| DEBT-05 | Phase 5 | Complete |
+| DEBT-06 | Phase 5 | Complete |
 | FEAT-01 | Phase 6 | Pending |
 | FEAT-02 | Phase 6 | Pending |
 
@@ -125,4 +125,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-26*
-*Last updated: 2026-01-26 after roadmap creation*
+*Last updated: 2026-01-27 after Phase 5 completion*

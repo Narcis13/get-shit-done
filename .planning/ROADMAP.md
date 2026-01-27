@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Context-Aware Reasoning** - Context assembly, decision history, audit trail
 - [x] **Phase 3: Decision Policies** - Specific policies for each GSD decision type
 - [x] **Phase 4: Workflow Integration** - Connect autonomous reasoning to all GSD workflows
-- [ ] **Phase 5: Architecture Refactoring** - Extract monolithic files into focused modules
+- [x] **Phase 5: Architecture Refactoring** - Extract monolithic files into focused modules
 - [ ] **Phase 6: Safety Features** - Rollback mechanism and plan revision
 
 ## Phase Details
@@ -101,7 +101,7 @@ Plans:
 - [x] 05-01-PLAN.md — Extract gsd-planner.md into focused modules (<500 lines)
 - [x] 05-02-PLAN.md — Extract gsd-executor.md into focused modules (<500 lines)
 - [x] 05-03-PLAN.md — Extract execute-plan.md and deduplicate shared content (<800 lines)
-- [ ] 05-04-PLAN.md — Create STATE.md schema and auto-recovery, atomic JSON pattern
+- [x] 05-04-PLAN.md — Create STATE.md schema and auto-recovery, atomic JSON pattern
 
 ### Phase 6: Safety Features
 **Goal**: Safer autonomous operation with rollback and inline plan revision
@@ -127,5 +127,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 2. Context-Aware Reasoning | 2/2 | Complete | 2026-01-26 |
 | 3. Decision Policies | 3/3 | Complete | 2026-01-26 |
 | 4. Workflow Integration | 4/4 | Complete | 2026-01-27 |
-| 5. Architecture Refactoring | 3/4 | In progress | - |
+| 5. Architecture Refactoring | 4/4 | Complete | 2026-01-27 |
 | 6. Safety Features | 0/TBD | Not started | - |
