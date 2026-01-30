@@ -250,6 +250,264 @@ body {
     height: 16px;
     margin-right: 4px;
     flex-shrink: 0;
+    position: relative;
+    font-family: monospace;
+    font-size: 11px;
+    line-height: 16px;
+    text-align: center;
+    font-weight: bold;
+}
+
+/* Base file icon */
+.tree-icon::before {
+    content: '◻';
+    color: var(--text-secondary);
+}
+
+/* Folder icon */
+.tree-icon.icon-folder::before {
+    content: '▢';
+    color: #90a4ae;
+    font-size: 14px;
+}
+
+/* Programming Language Icons */
+.tree-icon.icon-javascript::before {
+    content: 'JS';
+    color: #f7df1e;
+    font-size: 9px;
+}
+
+.tree-icon.icon-typescript::before {
+    content: 'TS';
+    color: #3178c6;
+    font-size: 9px;
+}
+
+.tree-icon.icon-react::before {
+    content: 'R';
+    color: #61dafb;
+}
+
+.tree-icon.icon-python::before {
+    content: 'PY';
+    color: #3776ab;
+    font-size: 9px;
+}
+
+.tree-icon.icon-ruby::before {
+    content: 'RB';
+    color: #cc342d;
+    font-size: 9px;
+}
+
+.tree-icon.icon-java::before {
+    content: 'J';
+    color: #007396;
+}
+
+.tree-icon.icon-c::before {
+    content: 'C';
+    color: #a8b9cc;
+}
+
+.tree-icon.icon-cpp::before {
+    content: 'C+';
+    color: #00599c;
+    font-size: 9px;
+}
+
+.tree-icon.icon-go::before {
+    content: 'GO';
+    color: #00add8;
+    font-size: 9px;
+}
+
+.tree-icon.icon-rust::before {
+    content: 'RS';
+    color: #dea584;
+    font-size: 9px;
+}
+
+.tree-icon.icon-php::before {
+    content: 'PHP';
+    color: #777bb4;
+    font-size: 8px;
+}
+
+.tree-icon.icon-csharp::before {
+    content: 'C#';
+    color: #239120;
+    font-size: 9px;
+}
+
+.tree-icon.icon-swift::before {
+    content: 'SW';
+    color: #fa7343;
+    font-size: 9px;
+}
+
+.tree-icon.icon-kotlin::before {
+    content: 'KT';
+    color: #7f52ff;
+    font-size: 9px;
+}
+
+/* Markup & Style Icons */
+.tree-icon.icon-html::before {
+    content: '<>';
+    color: #e34c26;
+    font-size: 10px;
+}
+
+.tree-icon.icon-css::before {
+    content: '#';
+    color: #1572b6;
+}
+
+.tree-icon.icon-sass::before,
+.tree-icon.icon-scss::before {
+    content: 'S';
+    color: #cc6699;
+}
+
+.tree-icon.icon-less::before {
+    content: '{';
+    color: #1d365d;
+}
+
+.tree-icon.icon-xml::before {
+    content: '<>';
+    color: #ff9800;
+    font-size: 10px;
+}
+
+.tree-icon.icon-svg::before {
+    content: '◇';
+    color: #ff9800;
+}
+
+.tree-icon.icon-markdown::before {
+    content: 'M↓';
+    color: #000000;
+    font-size: 9px;
+}
+
+/* Data & Config Icons */
+.tree-icon.icon-json::before {
+    content: '{}';
+    color: #5a9e4f;
+    font-size: 10px;
+}
+
+.tree-icon.icon-yaml::before {
+    content: 'Y';
+    color: #cb171e;
+}
+
+.tree-icon.icon-toml::before {
+    content: 'T';
+    color: #9c4121;
+}
+
+.tree-icon.icon-settings::before {
+    content: '⚙';
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+/* Special File Icons */
+.tree-icon.icon-npm::before {
+    content: '◆';
+    color: #cb3837;
+}
+
+.tree-icon.icon-git::before {
+    content: '●';
+    color: #f14e32;
+}
+
+.tree-icon.icon-docker::before {
+    content: '▣';
+    color: #2496ed;
+}
+
+.tree-icon.icon-eslint::before {
+    content: 'E';
+    color: #4b32c3;
+}
+
+.tree-icon.icon-certificate::before {
+    content: '✓';
+    color: #4caf50;
+}
+
+/* Document Icons */
+.tree-icon.icon-pdf::before {
+    content: 'PDF';
+    color: #d32f2f;
+    font-size: 8px;
+}
+
+.tree-icon.icon-document::before {
+    content: '▬';
+    color: #2196f3;
+}
+
+.tree-icon.icon-text::before {
+    content: 'T';
+    color: var(--text-secondary);
+}
+
+/* Image Icons */
+.tree-icon.icon-image::before {
+    content: '▫';
+    color: #4caf50;
+    font-size: 14px;
+}
+
+/* Archive Icons */
+.tree-icon.icon-archive::before {
+    content: '▤';
+    color: #9e9e9e;
+}
+
+/* Shell Icons */
+.tree-icon.icon-terminal::before {
+    content: '$';
+    color: #000000;
+}
+
+/* Other Icons */
+.tree-icon.icon-log::before {
+    content: '≡';
+    color: #795548;
+}
+
+.tree-icon.icon-database::before {
+    content: '◎';
+    color: #ff9800;
+}
+
+.tree-icon.icon-lock::before {
+    content: '◈';
+    color: #f44336;
+}
+
+.tree-icon.icon-file::before {
+    content: '▫';
+    color: var(--text-secondary);
+}
+
+/* Dark theme adjustments */
+@media (prefers-color-scheme: dark) {
+    .tree-icon.icon-markdown::before {
+        color: #ffffff;
+    }
+    
+    .tree-icon.icon-terminal::before {
+        color: #00ff00;
+    }
 }
 
 .tree-label {

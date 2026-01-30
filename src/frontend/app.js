@@ -300,10 +300,23 @@ class FileTree {
         }
         content.appendChild(arrow);
         
-        // Icon (placeholder for now)
+        // Icon with file type class
         const icon = document.createElement('span');
         icon.className = 'tree-icon';
-        icon.textContent = node.type === 'directory' ? '📁' : '📄';
+        
+        if (node.type === 'directory') {
+            icon.classList.add('icon-folder');
+        } else {
+            // Get file extension
+            const ext = node.name.lastIndexOf('.') > 0 
+                ? node.name.substring(node.name.lastIndexOf('.') + 1).toLowerCase()
+                : '';
+            
+            // Map extensions to icon classes
+            const iconClass = this.getFileIconClass(ext, node.name);
+            icon.classList.add(iconClass);
+        }
+        
         content.appendChild(icon);
         
         // Label
@@ -401,6 +414,125 @@ class FileTree {
             // TODO: Implement actual virtual scrolling when file count > 100
             // For now, browser handles it reasonably well up to ~1000 items
         });
+    }
+    
+    /**
+     * Get icon class for file based on extension or name
+     */
+    getFileIconClass(ext, filename) {
+        // Special filenames
+        const specialFiles = {
+            'package.json': 'icon-npm',
+            'package-lock.json': 'icon-npm',
+            '.gitignore': 'icon-git',
+            '.gitattributes': 'icon-git',
+            'readme.md': 'icon-markdown',
+            'changelog.md': 'icon-markdown',
+            'license': 'icon-certificate',
+            'license.md': 'icon-certificate',
+            'dockerfile': 'icon-docker',
+            '.dockerignore': 'icon-docker',
+            'makefile': 'icon-settings',
+            '.env': 'icon-settings',
+            '.editorconfig': 'icon-settings',
+            'tsconfig.json': 'icon-typescript',
+            '.eslintrc': 'icon-eslint',
+            '.eslintrc.js': 'icon-eslint',
+            '.eslintrc.json': 'icon-eslint'
+        };
+        
+        const lowerFilename = filename.toLowerCase();
+        if (specialFiles[lowerFilename]) {
+            return specialFiles[lowerFilename];
+        }
+        
+        // Extension mappings
+        const extMap = {
+            // Programming languages
+            'js': 'icon-javascript',
+            'jsx': 'icon-react',
+            'ts': 'icon-typescript',
+            'tsx': 'icon-react',
+            'py': 'icon-python',
+            'rb': 'icon-ruby',
+            'java': 'icon-java',
+            'c': 'icon-c',
+            'cpp': 'icon-cpp',
+            'cc': 'icon-cpp',
+            'h': 'icon-c',
+            'hpp': 'icon-cpp',
+            'go': 'icon-go',
+            'rs': 'icon-rust',
+            'php': 'icon-php',
+            'cs': 'icon-csharp',
+            'swift': 'icon-swift',
+            'kt': 'icon-kotlin',
+            'scala': 'icon-scala',
+            'r': 'icon-r',
+            'lua': 'icon-lua',
+            'dart': 'icon-dart',
+            
+            // Markup & Style
+            'html': 'icon-html',
+            'htm': 'icon-html',
+            'css': 'icon-css',
+            'scss': 'icon-sass',
+            'sass': 'icon-sass',
+            'less': 'icon-less',
+            'xml': 'icon-xml',
+            'svg': 'icon-svg',
+            'md': 'icon-markdown',
+            'mdx': 'icon-markdown',
+            
+            // Data & Config
+            'json': 'icon-json',
+            'yaml': 'icon-yaml',
+            'yml': 'icon-yaml',
+            'toml': 'icon-toml',
+            'ini': 'icon-settings',
+            'conf': 'icon-settings',
+            'config': 'icon-settings',
+            
+            // Documents
+            'pdf': 'icon-pdf',
+            'doc': 'icon-document',
+            'docx': 'icon-document',
+            'txt': 'icon-text',
+            'rtf': 'icon-document',
+            
+            // Images
+            'jpg': 'icon-image',
+            'jpeg': 'icon-image',
+            'png': 'icon-image',
+            'gif': 'icon-image',
+            'bmp': 'icon-image',
+            'ico': 'icon-image',
+            'webp': 'icon-image',
+            
+            // Archives
+            'zip': 'icon-archive',
+            'tar': 'icon-archive',
+            'gz': 'icon-archive',
+            'rar': 'icon-archive',
+            '7z': 'icon-archive',
+            
+            // Shell
+            'sh': 'icon-terminal',
+            'bash': 'icon-terminal',
+            'zsh': 'icon-terminal',
+            'fish': 'icon-terminal',
+            'ps1': 'icon-terminal',
+            'bat': 'icon-terminal',
+            'cmd': 'icon-terminal',
+            
+            // Other
+            'log': 'icon-log',
+            'sql': 'icon-database',
+            'db': 'icon-database',
+            'lock': 'icon-lock'
+        };
+        
+        return extMap[ext] || 'icon-file';
     }
 }
 
