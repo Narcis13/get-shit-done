@@ -12,6 +12,9 @@ class MarkdownEditor {
     this.findBar = null;
     this.currentFindIndex = -1;
     this.findMatches = [];
+    this.highlightLayer = null;
+    this.highlightTimeout = null;
+    this.highlightDebounceTime = 100;
     this.setupEditor();
     this.setupKeyboardShortcuts();
   }
@@ -41,7 +44,10 @@ class MarkdownEditor {
         </div>
         <div class="editor-content">
           <div class="line-numbers"></div>
-          <textarea class="editor-textarea" wrap="off" spellcheck="false"></textarea>
+          <div class="editor-wrapper">
+            <div class="highlight-layer"></div>
+            <textarea class="editor-textarea" wrap="off" spellcheck="false"></textarea>
+          </div>
         </div>
         <div class="status-bar">
           <span class="file-path"></span>
@@ -61,10 +67,20 @@ class MarkdownEditor {
     this.replaceControls = this.container.querySelector('#replace-controls');
     this.regexCheckbox = this.container.querySelector('#regex-checkbox');
     this.useRegex = false;
+    this.highlightLayer = this.container.querySelector('.highlight-layer');
 
     // Set up event listeners
     this.textarea.addEventListener('input', () => this.handleInput());
     this.textarea.addEventListener('scroll', () => this.syncScroll());
+    
+    // Sync highlight layer dimensions with textarea
+    const syncDimensions = () => {
+      const { width, height } = this.textarea.getBoundingClientRect();
+      this.highlightLayer.style.width = width + 'px';
+      this.highlightLayer.style.height = height + 'px';
+    };
+    window.addEventListener('resize', syncDimensions);
+    syncDimensions();
     
     // Find functionality event listeners
     this.findInput.addEventListener('input', () => this.performFind());
@@ -362,10 +378,18 @@ class MarkdownEditor {
       clearTimeout(this.saveTimeout);
     }
     this.saveTimeout = setTimeout(() => this.save(), this.saveDebounceTime);
+    
+    // Debounced syntax highlighting
+    if (this.highlightTimeout) {
+      clearTimeout(this.highlightTimeout);
+    }
+    this.highlightTimeout = setTimeout(() => this.updateSyntaxHighlighting(), this.highlightDebounceTime);
   }
 
   syncScroll() {
     this.lineNumbers.scrollTop = this.textarea.scrollTop;
+    this.highlightLayer.scrollTop = this.textarea.scrollTop;
+    this.highlightLayer.scrollLeft = this.textarea.scrollLeft;
   }
 
   updateLineNumbers() {
@@ -396,6 +420,7 @@ class MarkdownEditor {
     this.updateLineNumbers();
     this.updateStatus('Saved');
     this.container.querySelector('.file-path').textContent = path;
+    this.updateSyntaxHighlighting();
   }
 
   async save() {
@@ -433,7 +458,86 @@ class MarkdownEditor {
       this.textarea.value = newContent;
       this.currentContent = newContent;
       this.updateLineNumbers();
+      this.updateSyntaxHighlighting();
     }
+  }
+
+  updateSyntaxHighlighting() {
+    const content = this.textarea.value;
+    if (!content) {
+      this.highlightLayer.innerHTML = '';
+      return;
+    }
+
+    // Process content line by line
+    const lines = content.split('\n');
+    const highlightedLines = lines.map(line => this.highlightLine(line));
+    
+    // Join with line breaks and wrap in pre tag to maintain formatting
+    this.highlightLayer.innerHTML = `<pre class="highlight-content">${highlightedLines.join('\n')}</pre>`;
+  }
+
+  highlightLine(line) {
+    // Escape HTML
+    let html = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    
+    // Headers (h1-h6)
+    if (/^#{1,6}\s/.test(line)) {
+      const level = line.match(/^(#{1,6})\s/)[1].length;
+      html = html.replace(/^(#{1,6}\s)(.*)$/, `<span class="md-header md-h${level}">$1$2</span>`);
+    }
+    
+    // Bold text
+    html = html.replace(/\*\*([^*]+)\*\*/g, '<span class="md-bold">**$1**</span>');
+    html = html.replace(/__([^_]+)__/g, '<span class="md-bold">__$1__</span>');
+    
+    // Italic text
+    html = html.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<span class="md-italic">*$1*</span>');
+    html = html.replace(/(?<!_)_([^_]+)_(?!_)/g, '<span class="md-italic">_$1_</span>');
+    
+    // Inline code
+    html = html.replace(/`([^`]+)`/g, '<span class="md-code">`$1`</span>');
+    
+    // Links
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<span class="md-link">[$1]($2)</span>');
+    
+    // Images
+    html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<span class="md-image">![$1]($2)</span>');
+    
+    // Lists
+    if (/^[\s]*[-*+]\s/.test(line)) {
+      html = html.replace(/^([\s]*)([-*+]\s)/, '$1<span class="md-list">$2</span>');
+    }
+    
+    // Ordered lists
+    if (/^[\s]*\d+\.\s/.test(line)) {
+      html = html.replace(/^([\s]*)(\d+\.\s)/, '$1<span class="md-list">$2</span>');
+    }
+    
+    // Blockquotes
+    if (/^>/.test(line)) {
+      html = `<span class="md-blockquote">${html}</span>`;
+    }
+    
+    // Code blocks (simple detection for lines starting with 4 spaces or tab)
+    if (/^(\t|    )/.test(line)) {
+      html = `<span class="md-code-block">${html}</span>`;
+    }
+    
+    // Triple backticks for code blocks
+    if (/^```/.test(line)) {
+      html = `<span class="md-fence">${html}</span>`;
+    }
+    
+    // Horizontal rule
+    if (/^([-_*]){3,}\s*$/.test(line)) {
+      html = `<span class="md-hr">${html}</span>`;
+    }
+    
+    // Task lists
+    html = html.replace(/^([\s]*)(- \[[ x]\])/, '$1<span class="md-task">$2</span>');
+    
+    return html || '&nbsp;'; // Return non-breaking space for empty lines
   }
 }
 
@@ -445,6 +549,97 @@ style.textContent = `
     flex-direction: column;
     height: 100%;
     background: #fff;
+  }
+  
+  .editor-wrapper {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .highlight-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 0 10px;
+    pointer-events: none;
+    overflow: hidden;
+    white-space: pre;
+    color: transparent;
+    font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 20px;
+  }
+  
+  .highlight-content {
+    margin: 0;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+  }
+  
+  /* Markdown syntax highlighting */
+  .md-header {
+    color: #0969da !important;
+    font-weight: bold;
+  }
+  
+  .md-h1 { font-size: 1.4em; }
+  .md-h2 { font-size: 1.3em; }
+  .md-h3 { font-size: 1.2em; }
+  .md-h4 { font-size: 1.1em; }
+  .md-h5 { font-size: 1.05em; }
+  .md-h6 { font-size: 1em; }
+  
+  .md-bold {
+    color: #24292e !important;
+    font-weight: bold;
+  }
+  
+  .md-italic {
+    color: #24292e !important;
+    font-style: italic;
+  }
+  
+  .md-code {
+    color: #032f62 !important;
+    background: rgba(175, 184, 193, 0.2);
+    padding: 0.1em 0.2em;
+    border-radius: 3px;
+  }
+  
+  .md-code-block,
+  .md-fence {
+    color: #032f62 !important;
+    background: rgba(175, 184, 193, 0.1);
+  }
+  
+  .md-link {
+    color: #0969da !important;
+    text-decoration: underline;
+  }
+  
+  .md-image {
+    color: #cf222e !important;
+  }
+  
+  .md-list {
+    color: #cf222e !important;
+    font-weight: bold;
+  }
+  
+  .md-blockquote {
+    color: #57606a !important;
+    border-left: 3px solid #d0d7de;
+    padding-left: 0.5em;
+  }
+  
+  .md-hr {
+    color: #d0d7de !important;
+  }
+  
+  .md-task {
+    color: #0969da !important;
   }
   
   .find-bar {
@@ -554,7 +749,11 @@ style.textContent = `
   }
   
   .editor-textarea {
-    flex: 1;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     padding: 0 10px;
     border: none;
     resize: none;
@@ -562,6 +761,8 @@ style.textContent = `
     font-size: inherit;
     line-height: inherit;
     outline: none;
+    background: transparent;
+    z-index: 1;
   }
   
   .status-bar {
