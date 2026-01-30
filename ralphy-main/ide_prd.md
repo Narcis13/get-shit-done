@@ -113,7 +113,7 @@ A minimalist web-based IDE for managing the looppool-cc meta-prompting system.
 - [x] Parse command files to identify workflow delegation
 - [x] Parse workflow files to identify agent spawning
 - [x] Parse agent files to identify template usage
-- [ ] Implement d3-force or cytoscape.js with hierarchical positioning
+- [x] Implement d3-force or cytoscape.js with hierarchical positioning
 - [ ] Configure force simulation: charge -300, link distance by type
 - [ ] Style command nodes as blue
 - [ ] Style workflow nodes as green

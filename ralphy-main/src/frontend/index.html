@@ -66,6 +66,98 @@
       border-left: 1px solid #e0e0e0;
       overflow: hidden;
     }
+    
+    /* Graph viewer styles */
+    .graph-viewer {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .graph-header {
+      padding: 15px;
+      border-bottom: 1px solid #e0e0e0;
+      background: #fff;
+    }
+    
+    .graph-header h2 {
+      margin: 0 0 10px 0;
+      font-size: 18px;
+      font-weight: 500;
+    }
+    
+    .graph-filters {
+      margin-bottom: 10px;
+    }
+    
+    .graph-filters label {
+      margin-right: 15px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    
+    .graph-filters input[type="checkbox"] {
+      margin-right: 5px;
+      cursor: pointer;
+    }
+    
+    .graph-search {
+      width: 100%;
+      padding: 6px 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    
+    .graph-canvas {
+      flex: 1;
+      background: #fafafa;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .graph-svg {
+      width: 100%;
+      height: 100%;
+    }
+    
+    .node circle {
+      cursor: pointer;
+      transition: stroke-width 0.2s;
+    }
+    
+    .node:hover circle {
+      stroke-width: 3;
+    }
+    
+    .node.highlighted circle {
+      stroke: #333;
+      stroke-width: 3;
+    }
+    
+    .node text {
+      pointer-events: none;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    .edge {
+      pointer-events: none;
+      opacity: 0.6;
+      transition: opacity 0.2s, stroke-width 0.2s;
+    }
+    
+    .edge.highlighted {
+      opacity: 1;
+      stroke-width: 3;
+      stroke: #333;
+    }
+    
+    .graph-tooltip {
+      z-index: 1000;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
   </style>
 </head>
 <body>
