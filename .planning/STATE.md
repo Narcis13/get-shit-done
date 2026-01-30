@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 
 ## Current Position
 
-Phase: - of - (No active milestone)
-Plan: -
-Status: Ready for next milestone
-Last activity: 2026-01-27 — v1.0 milestone complete
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements for v2.0 IDE
+Last activity: 2026-01-30 — Milestone v2.0 IDE started
 
-Progress: [██████████] 100% (v1.0)
+Progress: [░░░░░░░░░░] 0% (v2.0)
 
 ## Performance Metrics
 
@@ -56,4 +56,4 @@ Stopped at: v1.0 milestone complete
 Resume file: None
 
 ---
-*Updated: 2026-01-27 after v1.0 milestone*
+*Updated: 2026-01-30 after starting v2.0 IDE milestone*

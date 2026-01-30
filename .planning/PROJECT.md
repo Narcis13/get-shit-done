@@ -36,7 +36,13 @@ Full autonomous execution from `/gsd:new-project` through `/gsd:execute-phase` w
 
 ### Active
 
-(To be defined in next milestone)
+**v2.0 IDE — Web-based visual interface for GSD meta-prompting system**
+
+- [ ] IDE Core: File tree + markdown editor for commands/, looppool/, agents/
+- [ ] Command Viewer: YAML frontmatter parsing, relationship display, quick actions
+- [ ] Graph View: Interactive visualization of command→workflow→agent→template relationships
+- [ ] State Panel: Dashboard for .planning/ files, progress tracking, quick actions
+- [ ] IDE Server: Node.js backend with file API, WebSocket updates, file watching
 
 ### Out of Scope
 
@@ -83,4 +89,4 @@ Tech stack:
 | Skip known bugs for v1 | Architecture changes may obsolete some | — Pending review |
 
 ---
-*Last updated: 2026-01-27 after v1.0 milestone*
+*Last updated: 2026-01-30 after starting v2.0 IDE milestone*
