@@ -83,7 +83,7 @@ A minimalist web-based IDE for managing the looppool-cc meta-prompting system.
 - [x] Create "View workflow" navigation link
 - [x] List spawned agents as clickable links
 - [x] Show templates used as clickable links
-- [ ] Build tabbed view: metadata card vs raw content
+- [x] Build tabbed view: metadata card vs raw content
 
 ## Priority 5: State Panel
 
