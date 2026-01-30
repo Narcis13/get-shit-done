@@ -196,6 +196,14 @@ class CommandViewer {
       .action-button:hover {
         background: #f5f5f5;
       }
+      .action-button.view-workflow {
+        background: #2196f3;
+        color: white;
+        border-color: #2196f3;
+      }
+      .action-button.view-workflow:hover {
+        background: #1976d2;
+      }
       .raw-content {
         padding: 20px;
         margin: 0;
@@ -477,6 +485,12 @@ class CommandViewer {
     html += '<div class="action-buttons">';
     html += `<button class="action-button copy-command">Copy as /lpl:command</button>`;
     html += `<button class="action-button test-terminal">Test in terminal</button>`;
+    
+    // Add View workflow button if a workflow is referenced
+    if (parsedReferences.workflows.length > 0) {
+      html += `<button class="action-button view-workflow" data-workflow="${parsedReferences.workflows[0]}">View workflow →</button>`;
+    }
+    
     html += '</div>';
 
     // TODO: Add agent links, template links
@@ -490,6 +504,15 @@ class CommandViewer {
 
     metadataCard.querySelector('.test-terminal')?.addEventListener('click', () => {
       this.testInTerminal(frontmatter);
+    });
+    
+    // Attach view workflow button listener
+    metadataCard.querySelector('.view-workflow')?.addEventListener('click', (e) => {
+      const workflowPath = e.target.dataset.workflow;
+      if (workflowPath) {
+        // Emit event for file tree to handle
+        window.dispatchEvent(new CustomEvent('open-file', { detail: { path: workflowPath } }));
+      }
     });
 
     // Attach file link listeners
