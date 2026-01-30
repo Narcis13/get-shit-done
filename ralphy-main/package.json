@@ -1,0 +1,16 @@
+{
+  "name": "lpl-ide",
+  "version": "1.0.0",
+  "description": "A minimalist web-based IDE for managing the looppool-cc meta-prompting system",
+  "type": "module",
+  "scripts": {
+    "ide": "node src/server/index.js",
+    "test": "node test-cli-args.js",
+    "lint": "echo 'No linting configured yet'"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "author": "",
+  "license": "MIT"
+}

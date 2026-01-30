@@ -24,8 +24,8 @@ A minimalist web-based IDE for managing the looppool-cc meta-prompting system.
 - [x] Implement fs.watch with 100ms debouncing and path filtering
 - [x] Add static file serving with correct MIME types (html, css, js, svg)
 - [x] Add browser auto-launch using platform-specific commands (open/xdg-open/start)
-- [x] Add --port CLI argument for configurable port
-- [x] Add --root CLI argument for configurable project root
+- [ ] Add --port CLI argument for configurable port
+- [ ] Add --root CLI argument for configurable project root
 - [ ] Add --no-open flag to skip browser auto-launch
 - [ ] Implement rate limiting for API endpoints
 - [ ] Add Content Security Policy headers
