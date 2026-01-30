@@ -493,7 +493,19 @@ class CommandViewer {
     
     html += '</div>';
 
-    // TODO: Add agent links, template links
+    // Render agent references
+    if (parsedReferences.agents.length > 0) {
+      html += '<div class="metadata-field">';
+      html += '<div class="metadata-label">Spawned Agents:</div>';
+      html += '<div class="metadata-value">';
+      parsedReferences.agents.forEach(agent => {
+        html += `<a href="#" class="file-link" data-path="${agent}">${agent}</a>`;
+      });
+      html += '</div>';
+      html += '</div>';
+    }
+
+    // TODO: Add template links
 
     metadataCard.innerHTML = html;
 
