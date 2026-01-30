@@ -1,5 +1,34 @@
 # Ralphy Progress Log
 
+## 2026-01-30 - Priority 5: State Panel - Create collapsible planning document tree
+- Implemented collapsible planning document tree in StatePanel component
+- Added planningDocs array to constructor with 5 documents: PROJECT.md, ROADMAP.md, PLAN.md, DECISIONS.md, and CONTINUE_HERE.md
+- PROJECT.md is expanded by default, others are collapsed
+- Created renderPlanningDocTree() method that generates HTML for the planning documents section
+- Each document has a toggle arrow, name, and "open in editor" button
+- Implemented loadDocumentContent() method that fetches document content via API when expanded
+- Created createDocumentPreview() method that generates a preview of document content:
+  - For PLAN.md: Shows task completion summary with emoji (📊 X/Y tasks complete (Z%))
+  - For ROADMAP.md: Shows phase and milestone count with emoji (🎯 X phases, Y milestones)
+  - For all documents: Shows first 3 lines as preview with truncation at 60 characters
+  - Shows count of additional lines if document has more than 5 lines
+- Implemented setupPlanningDocHandlers() method for handling user interactions:
+  - Click on toggle arrow expands/collapses document content
+  - Toggle arrow rotates 90 degrees when expanded using CSS transform
+  - Content is lazy-loaded only when first expanded
+  - Click on open button dispatches 'open-file' event for file tree integration
+- Added comprehensive CSS styling:
+  - Purple background (#faf5ff) and border (#a855f7) for planning docs section
+  - Smooth transitions for expand/collapse animations
+  - Hover effects for interactive elements
+  - Different colors for task summary (green) and phase summary (blue)
+  - Gray italic text for "more lines" indicator
+- Integrated into state panel render flow with automatic loading of initially expanded documents
+- Created comprehensive test suite test-planning-doc-tree.js with 13 tests
+- All tests passed: array initialization, method implementations, HTML structure, event handling, CSS styles
+- Linting passed (no linting configured but command succeeds)
+- Updated ide_prd.md to mark task as complete
+
 ## 2026-01-30 - Priority 5: State Panel - Build circular SVG progress indicators
 - Implemented createCircularProgress() method in state-panel.js to generate SVG circular progress indicators
 - Method accepts percentage and size parameters, calculates SVG circle radius and circumference

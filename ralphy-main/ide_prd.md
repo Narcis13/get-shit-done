@@ -102,7 +102,7 @@ A minimalist web-based IDE for managing the looppool-cc meta-prompting system.
 - [x] Extract phase/milestone data from ROADMAP.md using heading parsing
 - [x] Calculate task completion percentage from PLAN.md checkboxes
 - [x] Build circular SVG progress indicators
-- [ ] Create collapsible planning document tree
+- [x] Create collapsible planning document tree
 - [ ] Implement "Resume work" button opening CONTINUE_HERE.md
 - [ ] Add "View decisions" button linking to DECISIONS.md
 - [ ] Add progress summary quick action

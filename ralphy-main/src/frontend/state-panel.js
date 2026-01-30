@@ -6,6 +6,13 @@ class StatePanel {
     this.projectData = null;
     this.roadmapData = null;
     this.planData = null;
+    this.planningDocs = [
+      { name: 'PROJECT.md', path: 'PROJECT.md', expanded: true },
+      { name: 'ROADMAP.md', path: 'ROADMAP.md', expanded: false },
+      { name: 'PLAN.md', path: 'PLAN.md', expanded: false },
+      { name: 'DECISIONS.md', path: 'DECISIONS.md', expanded: false },
+      { name: 'CONTINUE_HERE.md', path: 'CONTINUE_HERE.md', expanded: false }
+    ];
     this.init();
   }
 
@@ -14,6 +21,7 @@ class StatePanel {
     this.render();
     this.startAutoRefresh();
     this.setupSSE();
+    this.setupPlanningDocHandlers();
   }
 
   render() {
@@ -72,6 +80,18 @@ class StatePanel {
     
     // Render sections
     let html = '<div class="state-sections">';
+    
+    // Add collapsible planning document tree
+    html += this.renderPlanningDocTree();
+    
+    // Load initially expanded documents
+    setTimeout(() => {
+      this.planningDocs.forEach(doc => {
+        if (doc.expanded) {
+          this.loadDocumentContent(doc.path);
+        }
+      });
+    }, 0);
     
     // Add PROJECT.md section if available
     if (projectHtml) {
@@ -508,6 +528,125 @@ class StatePanel {
     return percentage;
   }
 
+  renderPlanningDocTree() {
+    let html = `
+      <div class="state-section planning-docs-section">
+        <h3>Planning Documents</h3>
+        <div class="planning-doc-tree">
+    `;
+    
+    this.planningDocs.forEach(doc => {
+      html += `
+        <div class="planning-doc-item" data-path="${doc.path}">
+          <div class="doc-header">
+            <span class="doc-toggle ${doc.expanded ? 'expanded' : ''}" data-doc="${doc.path}">▶</span>
+            <span class="doc-name">${doc.name}</span>
+            <button class="doc-action-btn open-doc" data-path="${doc.path}" title="Open in editor">📝</button>
+          </div>
+          <div class="doc-content ${doc.expanded ? 'expanded' : 'collapsed'}" id="doc-content-${doc.path.replace('.', '-')}">
+            <div class="doc-loading">Loading...</div>
+          </div>
+        </div>
+      `;
+    });
+    
+    html += `
+        </div>
+      </div>
+    `;
+    
+    return html;
+  }
+
+  async loadDocumentContent(docPath) {
+    const contentId = `doc-content-${docPath.replace('.', '-')}`;
+    const contentDiv = document.getElementById(contentId);
+    
+    if (!contentDiv) return;
+    
+    try {
+      const response = await fetch(`/api/file?path=${encodeURIComponent(docPath)}`);
+      if (!response.ok) {
+        contentDiv.innerHTML = '<div class="doc-error">Document not found</div>';
+        return;
+      }
+      
+      const text = await response.text();
+      const preview = this.createDocumentPreview(text, docPath);
+      contentDiv.innerHTML = `<div class="doc-preview">${preview}</div>`;
+    } catch (error) {
+      contentDiv.innerHTML = '<div class="doc-error">Failed to load document</div>';
+    }
+  }
+
+  createDocumentPreview(text, docPath) {
+    const lines = text.split('\n').filter(line => line.trim());
+    const maxLines = 5;
+    const preview = lines.slice(0, maxLines);
+    
+    let html = '<ul class="doc-preview-list">';
+    
+    // For PLAN.md, show task completion summary
+    if (docPath === 'PLAN.md') {
+      const planData = this.parsePlanTasks(text);
+      const percentage = this.calculateTaskCompletion(planData.tasks);
+      html += `<li class="task-summary">📊 ${planData.completedCount}/${planData.totalCount} tasks complete (${percentage}%)</li>`;
+    }
+    
+    // For ROADMAP.md, show phase count
+    if (docPath === 'ROADMAP.md') {
+      const roadmapData = this.parseRoadmapPhases(text);
+      const phaseCount = roadmapData.phases.length;
+      const milestoneCount = roadmapData.phases.reduce((sum, p) => sum + p.milestones.length, 0);
+      html += `<li class="phase-summary">🎯 ${phaseCount} phases, ${milestoneCount} milestones</li>`;
+    }
+    
+    // Show first few lines as preview
+    preview.forEach((line, index) => {
+      if (index < 3) {
+        const truncated = line.length > 60 ? line.substring(0, 60) + '...' : line;
+        html += `<li>${this.escapeHtml(truncated)}</li>`;
+      }
+    });
+    
+    if (lines.length > maxLines) {
+      html += `<li class="more-indicator">... and ${lines.length - maxLines} more lines</li>`;
+    }
+    
+    html += '</ul>';
+    return html;
+  }
+
+  setupPlanningDocHandlers() {
+    // Toggle document expansion
+    document.addEventListener('click', async (e) => {
+      if (e.target.classList.contains('doc-toggle')) {
+        const docPath = e.target.dataset.doc;
+        const docItem = this.planningDocs.find(d => d.path === docPath);
+        const contentDiv = document.getElementById(`doc-content-${docPath.replace('.', '-')}`);
+        
+        if (docItem) {
+          docItem.expanded = !docItem.expanded;
+          e.target.classList.toggle('expanded');
+          contentDiv.classList.toggle('expanded');
+          contentDiv.classList.toggle('collapsed');
+          
+          // Load content if expanding and not already loaded
+          if (docItem.expanded && contentDiv.querySelector('.doc-loading')) {
+            await this.loadDocumentContent(docPath);
+          }
+        }
+      }
+      
+      // Open document in editor
+      if (e.target.classList.contains('open-doc')) {
+        const path = e.target.dataset.path;
+        const event = new CustomEvent('open-file', { detail: { path } });
+        document.dispatchEvent(event);
+      }
+    });
+  }
+
   createCircularProgress(percentage, size = 80) {
     const radius = (size - 4) / 2;
     const circumference = 2 * Math.PI * radius;
@@ -922,6 +1061,130 @@ const statePanelStyles = `
 
 .progress-item:last-child {
   margin-bottom: 0;
+}
+
+.planning-docs-section {
+  background: #faf5ff;
+  border: 1px solid #a855f7;
+}
+
+.planning-doc-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.planning-doc-item {
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background: white;
+  overflow: hidden;
+}
+
+.doc-header {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  background: #f9f9f9;
+  cursor: pointer;
+  user-select: none;
+}
+
+.doc-toggle {
+  font-size: 12px;
+  margin-right: 8px;
+  transition: transform 0.2s ease;
+  color: #666;
+}
+
+.doc-toggle.expanded {
+  transform: rotate(90deg);
+}
+
+.doc-name {
+  flex: 1;
+  font-weight: 500;
+  font-size: 14px;
+  color: #333;
+}
+
+.doc-action-btn {
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  margin-left: 8px;
+}
+
+.doc-action-btn:hover {
+  background: #f5f5f5;
+  border-color: #ccc;
+}
+
+.doc-content {
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  border-top: 1px solid #e0e0e0;
+}
+
+.doc-content.collapsed {
+  max-height: 0;
+  border-top: none;
+}
+
+.doc-content.expanded {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.doc-loading {
+  padding: 20px;
+  text-align: center;
+  color: #999;
+  font-size: 13px;
+}
+
+.doc-error {
+  padding: 20px;
+  text-align: center;
+  color: #d32f2f;
+  font-size: 13px;
+}
+
+.doc-preview {
+  padding: 15px;
+  background: #fafafa;
+}
+
+.doc-preview-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
+  color: #666;
+}
+
+.doc-preview-list li {
+  padding: 4px 0;
+  line-height: 1.5;
+}
+
+.task-summary, .phase-summary {
+  font-weight: 500;
+  color: #4caf50;
+  margin-bottom: 8px;
+}
+
+.phase-summary {
+  color: #2196f3;
+}
+
+.more-indicator {
+  font-style: italic;
+  color: #999;
+  margin-top: 5px;
 }
 </style>
 `;
