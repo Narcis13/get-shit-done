@@ -6,6 +6,7 @@ import { handleTree } from './routes/tree.js';
 import { handleFileGet, handleFilePut } from './routes/file.js';
 import { handleEvents } from './routes/events.js';
 import { handleStatic, isStaticPath } from './routes/static.js';
+import { handleStateGet, handleStatePut } from './routes/state.js';
 
 // Server configuration
 const PORT = 3456;
@@ -103,6 +104,8 @@ route('GET', '/api/tree', handleTree);
 route('GET', '/api/file', handleFileGet);
 route('PUT', '/api/file', handleFilePut);
 route('GET', '/api/events', handleEvents);
+route('GET', '/api/state', handleStateGet);
+route('PUT', '/api/state', handleStatePut);
 
 // Note: Root path is now handled by static file server (serves index.html)
 

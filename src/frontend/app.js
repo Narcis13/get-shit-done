@@ -1,12 +1,14 @@
 // Import SSE client
 import { SSEClient } from './sse-client.js';
 import { MarkdownEditor } from './editor.js';
+import { StatePanel } from './state-panel.js';
 
 // Main application module
 class LooppoolIDE {
     constructor() {
         this.fileTree = new FileTree();
         this.connectionStatus = new ConnectionStatus();
+        this.statePanel = new StatePanel();
         this.sseClient = new SSEClient('/api/events');
         this.selectedFile = null;
         this.openFiles = new Map(); // path -> content
@@ -23,6 +25,7 @@ class LooppoolIDE {
             // Initialize components
             await this.fileTree.init();
             this.connectionStatus.init();
+            await this.statePanel.init();
             
             // Set up event listeners
             this.setupEventListeners();
@@ -61,6 +64,9 @@ class LooppoolIDE {
             if (this.selectedFile === data.path && this.editor && !this.editor.hasUnsavedChanges()) {
                 await this.editor.loadFile(data.path);
             }
+            
+            // Update state panel if state file changed
+            this.statePanel.handleFileChange(data.path);
         });
         
         this.sseClient.on('file-created', async (event) => {
