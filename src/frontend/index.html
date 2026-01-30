@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Looppool IDE</title>
+    <meta name="description" content="IDE for Looppool - Meta-prompting and context engineering system">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header id="top-bar" role="banner">
+        <div class="project-info">
+            <h1 id="project-name">Looppool</h1>
+        </div>
+        <div class="status-indicators">
+            <div id="connection-status" class="status-indicator" role="status" aria-live="polite">
+                <span class="status-dot"></span>
+                <span class="status-text">Connecting...</span>
+            </div>
+            <div id="save-status" class="save-indicator" role="status" aria-live="polite">
+                <span class="save-text">Saved</span>
+            </div>
+        </div>
+    </header>
+    
+    <main id="main-layout" role="main">
+        <nav id="sidebar" role="navigation" aria-label="File tree">
+            <section class="sidebar-header">
+                <h2>Files</h2>
+                <button 
+                    id="collapse-all" 
+                    class="icon-button" 
+                    title="Collapse all folders"
+                    aria-label="Collapse all folders"
+                >
+                    ▾
+                </button>
+            </section>
+            <div id="file-tree-container" class="file-tree-scroll">
+                <ul id="file-tree" class="file-tree" role="tree" aria-label="Project files">
+                    <!-- File tree will be populated dynamically -->
+                </ul>
+            </div>
+        </nav>
+        
+        <section id="editor-pane" role="region" aria-label="Editor">
+            <div id="editor-tabs" class="tabs" role="tablist">
+                <!-- Tabs will be added dynamically -->
+            </div>
+            <div id="editor-container" class="editor-container">
+                <div id="welcome" class="welcome-screen">
+                    <h2>Welcome to Looppool IDE</h2>
+                    <p>Select a file from the sidebar to begin editing.</p>
+                    <p>Use <kbd>Ctrl</kbd>+<kbd>S</kbd> to save changes.</p>
+                </div>
+                <!-- Editor will be initialized here -->
+            </div>
+        </section>
+        
+        <aside id="state-panel" class="state-panel" role="complementary" aria-label="Project state">
+            <h2>Project State</h2>
+            <div id="state-content" class="state-content">
+                <!-- State panel content will be loaded dynamically -->
+                <div class="loading">Loading project state...</div>
+            </div>
+        </aside>
+    </main>
+    
+    <!-- Scripts loaded at end for performance -->
+    <script src="app.js" type="module"></script>
+</body>
+</html>

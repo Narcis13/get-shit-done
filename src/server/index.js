@@ -5,6 +5,7 @@ import { exec } from 'node:child_process';
 import { handleTree } from './routes/tree.js';
 import { handleFileGet, handleFilePut } from './routes/file.js';
 import { handleEvents } from './routes/events.js';
+import { handleStatic, isStaticPath } from './routes/static.js';
 
 // Server configuration
 const PORT = 3456;
@@ -78,6 +79,9 @@ async function handleRequest(req, res) {
     const handler = findRoute(req.method, pathname);
     if (handler) {
       await handler(req, res, url);
+    } else if (isStaticPath(pathname)) {
+      // Handle static files
+      await handleStatic(req, res, url);
     } else {
       res.writeHead(404, { 'Content-Type': 'text/plain' });
       res.end('Not Found');
@@ -100,11 +104,7 @@ route('GET', '/api/file', handleFileGet);
 route('PUT', '/api/file', handleFilePut);
 route('GET', '/api/events', handleEvents);
 
-// Serve static files for frontend (when we build it)
-route('GET', '/', (req, res) => {
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('IDE Server is running. Frontend not yet implemented.');
-});
+// Note: Root path is now handled by static file server (serves index.html)
 
 // Create and start server
 const server = createServer(handleRequest);
