@@ -104,13 +104,16 @@ class StatePanel {
           <div class="section-content">
             <div class="task-completion-summary">
               <span class="completion-label">Overall Completion:</span>
-              <div class="progress-bar large">
-                <div class="progress-fill" style="width: ${percentage}%"></div>
+              ${this.createCircularProgress(percentage, 100)}
+              <div class="task-completion-details">
+                <div class="progress-bar large">
+                  <div class="progress-fill" style="width: ${percentage}%"></div>
+                </div>
+                <span class="progress-value">${percentage}%</span>
+                <div class="task-stats">
+                  <span>${planData.completedCount} of ${planData.totalCount} tasks completed</span>
+                </div>
               </div>
-              <span class="progress-value">${percentage}%</span>
-            </div>
-            <div class="task-stats">
-              <span>${planData.completedCount} of ${planData.totalCount} tasks completed</span>
             </div>
           </div>
         </div>
@@ -185,10 +188,13 @@ class StatePanel {
         html += `
           <div class="progress-item">
             <span class="progress-label">${this.escapeHtml(label)}</span>
-            <div class="progress-bar">
-              <div class="progress-fill" style="width: ${percent}%"></div>
+            <div class="progress-indicators">
+              ${this.createCircularProgress(percent, 60)}
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: ${percent}%"></div>
+              </div>
+              <span class="progress-value">${percent}%</span>
             </div>
-            <span class="progress-value">${percent}%</span>
           </div>
         `;
       } else if (fractionMatch) {
@@ -197,10 +203,13 @@ class StatePanel {
         html += `
           <div class="progress-item">
             <span class="progress-label">${this.escapeHtml(label)}</span>
-            <div class="progress-bar">
-              <div class="progress-fill" style="width: ${percent}%"></div>
+            <div class="progress-indicators">
+              ${this.createCircularProgress(percent, 60)}
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: ${percent}%"></div>
+              </div>
+              <span class="progress-value">${current}/${total}</span>
             </div>
-            <span class="progress-value">${current}/${total}</span>
           </div>
         `;
       }
@@ -497,6 +506,48 @@ class StatePanel {
     const completed = tasks.filter(task => task.completed).length;
     const percentage = Math.round((completed / tasks.length) * 100);
     return percentage;
+  }
+
+  createCircularProgress(percentage, size = 80) {
+    const radius = (size - 4) / 2;
+    const circumference = 2 * Math.PI * radius;
+    const strokeDashoffset = circumference - (percentage / 100) * circumference;
+    
+    return `
+      <svg width="${size}" height="${size}" class="circular-progress">
+        <circle
+          cx="${size / 2}"
+          cy="${size / 2}"
+          r="${radius}"
+          stroke="#e0e0e0"
+          stroke-width="4"
+          fill="none"
+        />
+        <circle
+          cx="${size / 2}"
+          cy="${size / 2}"
+          r="${radius}"
+          stroke="#4caf50"
+          stroke-width="4"
+          fill="none"
+          stroke-dasharray="${circumference}"
+          stroke-dashoffset="${strokeDashoffset}"
+          stroke-linecap="round"
+          transform="rotate(-90 ${size / 2} ${size / 2})"
+          class="progress-circle"
+        />
+        <text
+          x="${size / 2}"
+          y="${size / 2}"
+          text-anchor="middle"
+          dominant-baseline="middle"
+          class="progress-text"
+          font-size="16"
+          font-weight="500"
+          fill="#333"
+        >${percentage}%</text>
+      </svg>
+    `;
   }
 
   destroy() {
@@ -831,6 +882,46 @@ const statePanelStyles = `
   font-size: 13px;
   color: #666;
   margin-top: 5px;
+}
+
+.circular-progress {
+  flex-shrink: 0;
+}
+
+.progress-circle {
+  transition: stroke-dashoffset 0.5s ease;
+}
+
+.progress-indicators {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex: 1;
+}
+
+.task-completion-summary {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.task-completion-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.task-completion-details .progress-bar.large {
+  width: 100%;
+}
+
+.progress-item {
+  margin-bottom: 15px;
+}
+
+.progress-item:last-child {
+  margin-bottom: 0;
 }
 </style>
 `;
