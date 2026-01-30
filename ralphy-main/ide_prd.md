@@ -26,7 +26,7 @@ A minimalist web-based IDE for managing the looppool-cc meta-prompting system.
 - [x] Add browser auto-launch using platform-specific commands (open/xdg-open/start)
 - [x] Add --port CLI argument for configurable port
 - [x] Add --root CLI argument for configurable project root
-- [ ] Add --no-open flag to skip browser auto-launch
+- [x] Add --no-open flag to skip browser auto-launch
 - [ ] Implement rate limiting for API endpoints
 - [ ] Add Content Security Policy headers
 
