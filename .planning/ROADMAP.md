@@ -15,7 +15,7 @@ The v2.0 IDE delivers a web-based visual interface for browsing, editing, and un
 - Integer phases (7, 8, 9, 10, 11): Planned v2.0 IDE work
 - Decimal phases (e.g., 7.1): Urgent insertions if needed
 
-- [ ] **Phase 7: IDE Server** - Backend API with file operations, security, and real-time updates
+- [x] **Phase 7: IDE Server** - Backend API with file operations, security, and real-time updates
 - [ ] **Phase 8: IDE Core** - File tree navigation and markdown editor with auto-save
 - [ ] **Phase 9: Command Viewer** - YAML frontmatter parsing and GSD-specific display
 - [ ] **Phase 10: State Panel** - Planning dashboard for .planning/ files
@@ -37,8 +37,8 @@ The v2.0 IDE delivers a web-based visual interface for browsing, editing, and un
 **Plans:** 2 plans
 
 Plans:
-- [ ] 07-01-PLAN.md — Security libs and file operation routes (path validation, tree builder, file API)
-- [ ] 07-02-PLAN.md — File watcher, SSE events, server entry point, npm script
+- [x] 07-01-PLAN.md — Security libs and file operation routes (path validation, tree builder, file API)
+- [x] 07-02-PLAN.md — File watcher, SSE events, server entry point, npm script
 
 ### Phase 8: IDE Core
 **Goal**: Users can browse file tree and edit markdown files with syntax highlighting
@@ -119,7 +119,7 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 7. IDE Server | v2.0 | 0/2 | Planned | - |
+| 7. IDE Server | v2.0 | 2/2 | ✓ Complete | 2026-01-30 |
 | 8. IDE Core | v2.0 | 0/3 | Not started | - |
 | 9. Command Viewer | v2.0 | 0/2 | Not started | - |
 | 10. State Panel | v2.0 | 0/2 | Not started | - |
