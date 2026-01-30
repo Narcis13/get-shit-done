@@ -61,7 +61,7 @@ A minimalist web-based IDE for managing the looppool-cc meta-prompting system.
 - [x] Implement find functionality (Cmd/Ctrl+F)
 - [x] Implement replace functionality with regex support
 - [x] Add syntax highlighting overlay for markdown
-- [ ] Add vim keybindings option
+- [x] Add vim keybindings option
 
 ## Priority 4: Command Viewer
 
