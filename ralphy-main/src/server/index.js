@@ -156,6 +156,24 @@ const server = http.createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  
+  // Content Security Policy headers
+  res.setHeader('Content-Security-Policy', 
+    "default-src 'self'; " +
+    "script-src 'self' 'unsafe-inline'; " +
+    "style-src 'self' 'unsafe-inline'; " +
+    "img-src 'self' data:; " +
+    "connect-src 'self' http://localhost:* http://127.0.0.1:*; " +
+    "font-src 'self'; " +
+    "object-src 'none'; " +
+    "frame-src 'none'; " +
+    "base-uri 'self'; " +
+    "form-action 'self'"
+  );
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'no-referrer-when-downgrade');
 
   // Get client identifier (using IP address for localhost)
   const clientId = req.socket.remoteAddress || 'unknown';
