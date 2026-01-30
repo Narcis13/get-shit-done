@@ -26,7 +26,17 @@ class MarkdownEditor {
             <span class="find-results">0/0</span>
             <button class="find-prev" title="Previous match (Shift+Enter)">↑</button>
             <button class="find-next" title="Next match (Enter)">↓</button>
+            <label class="regex-toggle">
+              <input type="checkbox" id="regex-checkbox">
+              <span title="Use regular expressions">.*</span>
+            </label>
+            <button class="replace-toggle" title="Toggle replace">▼</button>
             <button class="find-close" title="Close (Esc)">×</button>
+          </div>
+          <div class="replace-controls" id="replace-controls" style="display: none;">
+            <input type="text" id="replace-input" placeholder="Replace..." class="replace-input">
+            <button class="replace-current" title="Replace current match">Replace</button>
+            <button class="replace-all" title="Replace all matches">Replace All</button>
           </div>
         </div>
         <div class="editor-content">
@@ -47,6 +57,10 @@ class MarkdownEditor {
     this.findBar = this.container.querySelector('#find-bar');
     this.findInput = this.container.querySelector('#find-input');
     this.findResults = this.container.querySelector('.find-results');
+    this.replaceInput = this.container.querySelector('#replace-input');
+    this.replaceControls = this.container.querySelector('#replace-controls');
+    this.regexCheckbox = this.container.querySelector('#regex-checkbox');
+    this.useRegex = false;
 
     // Set up event listeners
     this.textarea.addEventListener('input', () => this.handleInput());
@@ -59,6 +73,18 @@ class MarkdownEditor {
     this.container.querySelector('.find-next').addEventListener('click', () => this.findNext());
     this.container.querySelector('.find-prev').addEventListener('click', () => this.findPrevious());
     this.container.querySelector('.find-close').addEventListener('click', () => this.closeFindBar());
+    
+    // Replace functionality event listeners
+    this.replaceInput.addEventListener('keydown', (e) => this.handleReplaceKeydown(e));
+    this.container.querySelector('.replace-toggle').addEventListener('click', () => this.toggleReplaceBar());
+    this.container.querySelector('.replace-current').addEventListener('click', () => this.replaceCurrent());
+    this.container.querySelector('.replace-all').addEventListener('click', () => this.replaceAll());
+    
+    // Regex toggle
+    this.regexCheckbox.addEventListener('change', () => {
+      this.useRegex = this.regexCheckbox.checked;
+      this.performFind();
+    });
 
     // Initial line numbers
     this.updateLineNumbers();
@@ -71,6 +97,12 @@ class MarkdownEditor {
       if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
         e.preventDefault();
         this.openFindBar();
+      }
+      
+      // Cmd/Ctrl+H - Open replace
+      if ((e.metaKey || e.ctrlKey) && e.key === 'h') {
+        e.preventDefault();
+        this.openFindBar(true);
       }
 
       // Cmd/Ctrl+S - Save
@@ -93,8 +125,11 @@ class MarkdownEditor {
     });
   }
 
-  openFindBar() {
+  openFindBar(showReplace = false) {
     this.findBar.style.display = 'block';
+    if (showReplace) {
+      this.replaceControls.style.display = 'block';
+    }
     this.findInput.focus();
     this.findInput.select();
     this.performFind();
@@ -102,8 +137,17 @@ class MarkdownEditor {
 
   closeFindBar() {
     this.findBar.style.display = 'none';
+    this.replaceControls.style.display = 'none';
     this.clearFindHighlights();
     this.textarea.focus();
+  }
+  
+  toggleReplaceBar() {
+    const isVisible = this.replaceControls.style.display !== 'none';
+    this.replaceControls.style.display = isVisible ? 'none' : 'block';
+    if (!isVisible) {
+      this.replaceInput.focus();
+    }
   }
 
   performFind() {
@@ -119,19 +163,41 @@ class MarkdownEditor {
     const content = this.textarea.value;
     this.findMatches = [];
     
-    // Find all matches
-    let index = 0;
-    while (index < content.length) {
-      const matchIndex = content.toLowerCase().indexOf(searchText.toLowerCase(), index);
-      if (matchIndex === -1) break;
-      
-      this.findMatches.push({
-        start: matchIndex,
-        end: matchIndex + searchText.length,
-        text: content.substring(matchIndex, matchIndex + searchText.length)
-      });
-      
-      index = matchIndex + 1;
+    if (this.useRegex) {
+      // Regex search
+      try {
+        const regex = new RegExp(searchText, 'g');
+        let match;
+        while ((match = regex.exec(content)) !== null) {
+          this.findMatches.push({
+            start: match.index,
+            end: match.index + match[0].length,
+            text: match[0]
+          });
+          // Prevent infinite loop for zero-width matches
+          if (match[0].length === 0) {
+            regex.lastIndex++;
+          }
+        }
+      } catch (e) {
+        // Invalid regex - clear matches
+        this.findMatches = [];
+      }
+    } else {
+      // Plain text search
+      let index = 0;
+      while (index < content.length) {
+        const matchIndex = content.toLowerCase().indexOf(searchText.toLowerCase(), index);
+        if (matchIndex === -1) break;
+        
+        this.findMatches.push({
+          start: matchIndex,
+          end: matchIndex + searchText.length,
+          text: content.substring(matchIndex, matchIndex + searchText.length)
+        });
+        
+        index = matchIndex + 1;
+      }
     }
 
     if (this.findMatches.length > 0) {
@@ -210,6 +276,80 @@ class MarkdownEditor {
         this.findNext();
       }
     }
+  }
+  
+  handleReplaceKeydown(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      this.replaceCurrent();
+    }
+  }
+  
+  replaceCurrent() {
+    if (this.currentFindIndex < 0 || this.currentFindIndex >= this.findMatches.length) {
+      return;
+    }
+    
+    const replaceText = this.replaceInput.value;
+    const match = this.findMatches[this.currentFindIndex];
+    const content = this.textarea.value;
+    
+    // Replace the current match
+    const newContent = content.substring(0, match.start) + 
+                      replaceText + 
+                      content.substring(match.end);
+    
+    this.textarea.value = newContent;
+    
+    // Adjust remaining matches
+    const lengthDiff = replaceText.length - match.text.length;
+    for (let i = this.currentFindIndex + 1; i < this.findMatches.length; i++) {
+      this.findMatches[i].start += lengthDiff;
+      this.findMatches[i].end += lengthDiff;
+    }
+    
+    // Remove current match and re-find from this position
+    this.findMatches.splice(this.currentFindIndex, 1);
+    
+    // If there are remaining matches, highlight the next one
+    if (this.findMatches.length > 0) {
+      if (this.currentFindIndex >= this.findMatches.length) {
+        this.currentFindIndex = 0;
+      }
+      this.highlightMatch(this.currentFindIndex);
+    } else {
+      this.currentFindIndex = -1;
+    }
+    
+    this.updateFindResults();
+    this.handleInput(); // Mark as dirty and trigger auto-save
+  }
+  
+  replaceAll() {
+    if (this.findMatches.length === 0) {
+      return;
+    }
+    
+    const searchText = this.findInput.value;
+    const replaceText = this.replaceInput.value;
+    let content = this.textarea.value;
+    
+    if (this.useRegex) {
+      try {
+        const regex = new RegExp(searchText, 'g');
+        content = content.replace(regex, replaceText);
+      } catch (e) {
+        return; // Invalid regex
+      }
+    } else {
+      // Replace all occurrences (case-insensitive)
+      const regex = new RegExp(searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+      content = content.replace(regex, replaceText);
+    }
+    
+    this.textarea.value = content;
+    this.performFind(); // Re-find to update matches
+    this.handleInput(); // Mark as dirty and trigger auto-save
   }
 
   handleInput() {
@@ -313,14 +453,20 @@ style.textContent = `
     padding: 8px;
   }
   
-  .find-controls {
+  .find-controls,
+  .replace-controls {
     display: flex;
     align-items: center;
     gap: 8px;
-    max-width: 400px;
+    max-width: 600px;
   }
   
-  .find-input {
+  .replace-controls {
+    margin-top: 8px;
+  }
+  
+  .find-input,
+  .replace-input {
     flex: 1;
     padding: 4px 8px;
     border: 1px solid #ccc;
@@ -329,7 +475,8 @@ style.textContent = `
     font-size: 13px;
   }
   
-  .find-input:focus {
+  .find-input:focus,
+  .replace-input:focus {
     outline: none;
     border-color: #2196f3;
   }
@@ -341,9 +488,30 @@ style.textContent = `
     text-align: center;
   }
   
+  .regex-toggle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    color: #666;
+  }
+  
+  .regex-toggle input[type="checkbox"] {
+    cursor: pointer;
+  }
+  
+  .regex-toggle span {
+    font-family: monospace;
+    font-weight: bold;
+  }
+  
   .find-prev,
   .find-next,
-  .find-close {
+  .find-close,
+  .replace-toggle,
+  .replace-current,
+  .replace-all {
     padding: 4px 8px;
     border: 1px solid #ccc;
     border-radius: 4px;
@@ -354,7 +522,10 @@ style.textContent = `
   
   .find-prev:hover,
   .find-next:hover,
-  .find-close:hover {
+  .find-close:hover,
+  .replace-toggle:hover,
+  .replace-current:hover,
+  .replace-all:hover {
     background: #f0f0f0;
   }
   
