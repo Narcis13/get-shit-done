@@ -519,3 +519,25 @@
 - Implementation was already complete and functional
 - Linting passed (no linting configured but command succeeds)
 - Updated ide_prd.md to mark task as complete
+
+## 2026-01-30 - Priority 6: Graph Visualization - Parse agent files to identify template usage
+- Verified that parseAgentRelationships() method is already implemented in graph-viewer.js
+- Method is at lines 159-172 and correctly parses agent files to extract template references
+- Uses pattern /looppool\\/templates\\/[\\w-]+\\.md/g to match template file references
+- Implementation includes code block filtering to avoid false positives
+- Creates "uses" relationship type for agent-to-template connections
+- Method is called by parseFileRelationships() when processing agent type files
+- Created comprehensive test suite test-agent-template-parsing.js with 10 tests covering:
+  - Class and method existence
+  - Template pattern matching
+  - Code block filtering logic
+  - Relationship type verification ("uses")
+  - Integration with parseFileRelationships
+  - Agent file identification in extractFiles
+  - Template node creation in addRelationship
+  - Multiple template matching with global flag
+  - Complete parsing flow verification
+- All tests passed successfully (10/10)
+- Feature was already complete and functional - no implementation needed
+- Linting passed (no linting configured but command succeeds)
+- Updated ide_prd.md to mark task as complete
