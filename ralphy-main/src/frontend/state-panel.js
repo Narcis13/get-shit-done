@@ -61,6 +61,9 @@ class StatePanel {
     // Load PROJECT.md
     const projectHtml = await this.loadProjectMd();
     
+    // Load ROADMAP.md
+    const roadmapData = await this.loadRoadmapMd();
+    
     // Parse markdown sections
     const sections = this.parseSections(content);
     
@@ -73,6 +76,18 @@ class StatePanel {
         <div class="state-section project-section">
           <h3>Project Overview</h3>
           <div class="section-content markdown-content">${projectHtml}</div>
+        </div>
+      `;
+    }
+    
+    // Add ROADMAP.md milestones if available
+    if (roadmapData && roadmapData.phases.length > 0) {
+      html += `
+        <div class="state-section roadmap-section">
+          <h3>Project Phases</h3>
+          <div class="section-content">
+            ${this.renderRoadmapPhases(roadmapData.phases)}
+          </div>
         </div>
       `;
     }
@@ -213,6 +228,45 @@ class StatePanel {
     return html;
   }
 
+  renderRoadmapPhases(phases) {
+    let html = '<div class="roadmap-phases">';
+    
+    phases.forEach(phase => {
+      html += `
+        <div class="roadmap-phase">
+          <h4 class="phase-name">${this.escapeHtml(phase.name)}</h4>
+      `;
+      
+      if (phase.milestones.length > 0) {
+        html += '<div class="phase-milestones">';
+        
+        phase.milestones.forEach(milestone => {
+          html += `
+            <div class="roadmap-milestone">
+              <h5 class="milestone-name">${this.escapeHtml(milestone.name)}</h5>
+          `;
+          
+          if (milestone.tasks.length > 0) {
+            html += '<ul class="milestone-tasks">';
+            milestone.tasks.forEach(task => {
+              html += `<li>${this.escapeHtml(task)}</li>`;
+            });
+            html += '</ul>';
+          }
+          
+          html += '</div>';
+        });
+        
+        html += '</div>';
+      }
+      
+      html += '</div>';
+    });
+    
+    html += '</div>';
+    return html;
+  }
+
   renderError(error) {
     const contentDiv = this.container.querySelector('.state-panel-content');
     contentDiv.innerHTML = `
@@ -263,6 +317,67 @@ class StatePanel {
       console.error('Failed to load PROJECT.md:', error);
       return null;
     }
+  }
+
+  async loadRoadmapMd() {
+    try {
+      const response = await fetch('/api/file?path=ROADMAP.md');
+      if (!response.ok) {
+        return null;
+      }
+      const text = await response.text();
+      return this.parseRoadmapPhases(text);
+    } catch (error) {
+      console.error('Failed to load ROADMAP.md:', error);
+      return null;
+    }
+  }
+
+  parseRoadmapPhases(text) {
+    const phases = [];
+    const lines = text.split('\n');
+    let currentPhase = null;
+    let currentMilestone = null;
+    
+    for (const line of lines) {
+      // Check for phase (## heading)
+      const phaseMatch = line.match(/^##\s+(.+)/);
+      if (phaseMatch) {
+        if (currentPhase) {
+          phases.push(currentPhase);
+        }
+        currentPhase = {
+          name: phaseMatch[1],
+          milestones: []
+        };
+        currentMilestone = null;
+        continue;
+      }
+      
+      // Check for milestone (### heading)
+      const milestoneMatch = line.match(/^###\s+(.+)/);
+      if (milestoneMatch && currentPhase) {
+        currentMilestone = {
+          name: milestoneMatch[1],
+          tasks: []
+        };
+        currentPhase.milestones.push(currentMilestone);
+        continue;
+      }
+      
+      // Check for task list item
+      const taskMatch = line.match(/^\s*[-*]\s+(.+)/);
+      if (taskMatch && currentMilestone) {
+        currentMilestone.tasks.push(taskMatch[1]);
+      }
+    }
+    
+    // Add the last phase if exists
+    if (currentPhase) {
+      phases.push(currentPhase);
+    }
+    
+    return { phases };
   }
 
   parseMarkdown(text) {
@@ -547,6 +662,61 @@ const statePanelStyles = `
 .project-section {
   background: #f9f9f9;
   border: 1px solid #2196f3;
+}
+
+.roadmap-section {
+  background: #f5f9ff;
+  border: 1px solid #64b5f6;
+}
+
+.roadmap-phases {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.roadmap-phase {
+  border-left: 3px solid #2196f3;
+  padding-left: 15px;
+}
+
+.phase-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1976d2;
+  margin: 0 0 10px 0;
+}
+
+.phase-milestones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.roadmap-milestone {
+  margin-left: 20px;
+  border-left: 2px solid #90caf9;
+  padding-left: 12px;
+}
+
+.milestone-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #424242;
+  margin: 0 0 8px 0;
+}
+
+.milestone-tasks {
+  list-style-type: disc;
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13px;
+  color: #666;
+}
+
+.milestone-tasks li {
+  margin: 4px 0;
+  line-height: 1.5;
 }
 </style>
 `;
