@@ -746,6 +746,98 @@ a:focus-visible {
     color: var(--text-secondary);
 }
 
+/* Metadata Card Styles */
+.metadata-card {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    padding: 16px;
+    margin-bottom: 0;
+}
+
+.metadata-header {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.metadata-label {
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-right: 8px;
+}
+
+.metadata-name,
+.metadata-description,
+.metadata-args,
+.metadata-agent {
+    font-size: var(--font-size);
+    line-height: 1.5;
+}
+
+.metadata-name code,
+.metadata-args code {
+    background: var(--bg-tertiary);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-small);
+    color: var(--status-info);
+}
+
+.metadata-tools {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color);
+}
+
+.tools-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.tool-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    font-size: var(--font-size-small);
+    font-weight: 500;
+    border-radius: 4px;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+/* Tool badge colors by category */
+.tool-badge.tool-file {
+    background: #2d5a2d;
+    border-color: #3d7a3d;
+    color: #a7d5a7;
+}
+
+.tool-badge.tool-exec {
+    background: #5a4d2d;
+    border-color: #7a6d3d;
+    color: #d5c7a7;
+}
+
+.tool-badge.tool-search {
+    background: #4d2d5a;
+    border-color: #6d3d7a;
+    color: #c7a7d5;
+}
+
+.tool-badge.tool-web {
+    background: #2d4d5a;
+    border-color: #3d6d7a;
+    color: #a7c7d5;
+}
+
+/* Adjust editor wrapper when metadata card is visible */
+.metadata-card + .editor-wrapper {
+    height: calc(100% - 150px); /* Approximate height of metadata card */
+}
+
 /* Animations */
 @media (prefers-reduced-motion: no-preference) {
     .tree-arrow {

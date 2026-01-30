@@ -5,6 +5,8 @@
  * Follows the zero-dependency philosophy - uses browser native APIs.
  */
 
+import YAMLParser from './yaml-parser.js';
+
 export class MarkdownEditor {
     constructor(container) {
         this.container = container;
@@ -24,6 +26,12 @@ export class MarkdownEditor {
         this.lineNumbers = null;
         this.textarea = null;
         this.highlightLayer = null;
+        this.metadataCard = null;
+        
+        // YAML frontmatter data
+        this.frontmatter = null;
+        this.contentWithoutFrontmatter = '';
+        this.isCommandFile = false;
         
         // Initialize the editor
         this.init();
@@ -39,6 +47,12 @@ export class MarkdownEditor {
     createEditorElements() {
         // Clear container
         this.container.innerHTML = '';
+        
+        // Create metadata card (hidden by default)
+        this.metadataCard = document.createElement('div');
+        this.metadataCard.className = 'metadata-card';
+        this.metadataCard.style.display = 'none';
+        this.container.appendChild(this.metadataCard);
         
         // Create wrapper
         this.wrapper = document.createElement('div');
@@ -232,6 +246,28 @@ export class MarkdownEditor {
             this.originalContent = data.content;
             this.isDirty = false;
             
+            // Check if this is a command file
+            this.isCommandFile = path.includes('/commands/') || path.includes('/agents/') || 
+                                path.includes('/workflows/') || path.includes('/looppool/');
+            
+            // Parse YAML frontmatter if applicable
+            if (this.isCommandFile && path.endsWith('.md')) {
+                const parsed = YAMLParser.parseFrontmatter(this.content);
+                if (parsed.frontmatter) {
+                    this.frontmatter = YAMLParser.normalizeFrontmatter(parsed.frontmatter);
+                    this.contentWithoutFrontmatter = parsed.content;
+                    this.displayMetadataCard();
+                } else {
+                    this.frontmatter = null;
+                    this.contentWithoutFrontmatter = this.content;
+                    this.hideMetadataCard();
+                }
+            } else {
+                this.frontmatter = null;
+                this.contentWithoutFrontmatter = this.content;
+                this.hideMetadataCard();
+            }
+            
             // Update UI
             this.textarea.value = this.content;
             this.updateLineNumbers();
@@ -357,6 +393,102 @@ export class MarkdownEditor {
         this.setCursorPosition(pos.start + text.length);
     }
     
+    // Display metadata card for command files
+    displayMetadataCard() {
+        if (!this.frontmatter || !this.metadataCard) {
+            return;
+        }
+        
+        // Clear existing content
+        this.metadataCard.innerHTML = '';
+        
+        // Create card content
+        const header = document.createElement('div');
+        header.className = 'metadata-header';
+        
+        // Command name
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'metadata-name';
+        nameDiv.innerHTML = `<span class="metadata-label">Command:</span> <code>${this.escapeHtml(this.frontmatter.name)}</code>`;
+        header.appendChild(nameDiv);
+        
+        // Description
+        const descDiv = document.createElement('div');
+        descDiv.className = 'metadata-description';
+        descDiv.innerHTML = `<span class="metadata-label">Description:</span> ${this.escapeHtml(this.frontmatter.description)}`;
+        header.appendChild(descDiv);
+        
+        // Arguments
+        if (this.frontmatter.argumentHint) {
+            const argsDiv = document.createElement('div');
+            argsDiv.className = 'metadata-args';
+            argsDiv.innerHTML = `<span class="metadata-label">Arguments:</span> <code>${this.escapeHtml(this.frontmatter.argumentHint)}</code>`;
+            header.appendChild(argsDiv);
+        }
+        
+        // Agent
+        if (this.frontmatter.agent) {
+            const agentDiv = document.createElement('div');
+            agentDiv.className = 'metadata-agent';
+            agentDiv.innerHTML = `<span class="metadata-label">Agent:</span> ${this.escapeHtml(this.frontmatter.agent)}`;
+            header.appendChild(agentDiv);
+        }
+        
+        this.metadataCard.appendChild(header);
+        
+        // Allowed tools
+        if (this.frontmatter.allowedTools && this.frontmatter.allowedTools.length > 0) {
+            const toolsDiv = document.createElement('div');
+            toolsDiv.className = 'metadata-tools';
+            
+            const toolsLabel = document.createElement('div');
+            toolsLabel.className = 'metadata-label';
+            toolsLabel.textContent = 'Allowed Tools:';
+            toolsDiv.appendChild(toolsLabel);
+            
+            const toolsList = document.createElement('div');
+            toolsList.className = 'tools-list';
+            
+            this.frontmatter.allowedTools.forEach(tool => {
+                const badge = document.createElement('span');
+                badge.className = 'tool-badge';
+                badge.textContent = tool;
+                // Add specific classes for common tools
+                if (['Read', 'Write', 'Edit', 'MultiEdit'].includes(tool)) {
+                    badge.classList.add('tool-file');
+                } else if (['Bash', 'Task'].includes(tool)) {
+                    badge.classList.add('tool-exec');
+                } else if (['Grep', 'Glob'].includes(tool)) {
+                    badge.classList.add('tool-search');
+                } else if (['WebFetch', 'WebSearch'].includes(tool)) {
+                    badge.classList.add('tool-web');
+                }
+                toolsList.appendChild(badge);
+            });
+            
+            toolsDiv.appendChild(toolsList);
+            this.metadataCard.appendChild(toolsDiv);
+        }
+        
+        // Show the card
+        this.metadataCard.style.display = 'block';
+    }
+    
+    // Hide metadata card
+    hideMetadataCard() {
+        if (this.metadataCard) {
+            this.metadataCard.style.display = 'none';
+            this.metadataCard.innerHTML = '';
+        }
+    }
+    
+    // Escape HTML for safe display
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
     // Cleanup
     destroy() {
         // Save if dirty
@@ -377,6 +509,7 @@ export class MarkdownEditor {
         this.lineNumbers = null;
         this.textarea = null;
         this.highlightLayer = null;
+        this.metadataCard = null;
     }
 }
 
