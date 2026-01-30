@@ -209,6 +209,20 @@ class CommandViewer {
         padding: 20px;
         text-align: center;
       }
+      .file-link {
+        color: #2196f3;
+        text-decoration: none;
+        font-family: monospace;
+        font-size: 14px;
+        padding: 2px 4px;
+        background: #f5f5f5;
+        border-radius: 3px;
+        margin-right: 8px;
+      }
+      .file-link:hover {
+        background: #e3f2fd;
+        text-decoration: underline;
+      }
     `;
     document.head.appendChild(style);
   }
@@ -315,6 +329,71 @@ class CommandViewer {
     return value;
   }
 
+  parseFileReferences(content) {
+    const references = {
+      workflows: [],
+      agents: [],
+      templates: []
+    };
+
+    // Regular expressions to match file references
+    const patterns = {
+      // Match workflow references: looppool/workflows/*.md
+      workflows: /looppool\/workflows\/[\w-]+\.md/g,
+      // Match agent references: agents/*.md
+      agents: /agents\/[\w-]+\.md/g,
+      // Match template references: looppool/templates/*.md
+      templates: /looppool\/templates\/[\w-]+\.md/g
+    };
+
+    // Also match more general markdown file links [text](path.md)
+    const markdownLinkPattern = /\[([^\]]+)\]\(([^)]+\.md)\)/g;
+    const codeBlockPattern = /```[\s\S]*?```/g;
+    const inlineCodePattern = /`[^`]+`/g;
+
+    // Remove code blocks and inline code to avoid false positives
+    const cleanContent = content
+      .replace(codeBlockPattern, '')
+      .replace(inlineCodePattern, '');
+
+    // Extract workflow references
+    let match;
+    while ((match = patterns.workflows.exec(cleanContent)) !== null) {
+      if (!references.workflows.includes(match[0])) {
+        references.workflows.push(match[0]);
+      }
+    }
+
+    // Extract agent references
+    while ((match = patterns.agents.exec(cleanContent)) !== null) {
+      if (!references.agents.includes(match[0])) {
+        references.agents.push(match[0]);
+      }
+    }
+
+    // Extract template references
+    while ((match = patterns.templates.exec(cleanContent)) !== null) {
+      if (!references.templates.includes(match[0])) {
+        references.templates.push(match[0]);
+      }
+    }
+
+    // Also check markdown links
+    while ((match = markdownLinkPattern.exec(cleanContent)) !== null) {
+      const linkPath = match[2];
+      
+      if (linkPath.includes('looppool/workflows/') && !references.workflows.includes(linkPath)) {
+        references.workflows.push(linkPath);
+      } else if (linkPath.includes('agents/') && !references.agents.includes(linkPath)) {
+        references.agents.push(linkPath);
+      } else if (linkPath.includes('looppool/templates/') && !references.templates.includes(linkPath)) {
+        references.templates.push(linkPath);
+      }
+    }
+
+    return references;
+  }
+
   async loadCommand(filePath) {
     this.currentFile = filePath;
     
@@ -380,12 +459,27 @@ class CommandViewer {
       html += '</div>';
     }
 
+    // Parse file references from body content
+    const parsedReferences = this.parseFileReferences(bodyContent);
+    
+    // Render workflow references
+    if (parsedReferences.workflows.length > 0) {
+      html += '<div class="metadata-field">';
+      html += '<div class="metadata-label">Delegated Workflow:</div>';
+      html += '<div class="metadata-value">';
+      parsedReferences.workflows.forEach(workflow => {
+        html += `<a href="#" class="file-link" data-path="${workflow}">${workflow}</a>`;
+      });
+      html += '</div>';
+      html += '</div>';
+    }
+
     html += '<div class="action-buttons">';
     html += `<button class="action-button copy-command">Copy as /lpl:command</button>`;
     html += `<button class="action-button test-terminal">Test in terminal</button>`;
     html += '</div>';
 
-    // TODO: Add workflow links, agent links, template links
+    // TODO: Add agent links, template links
 
     metadataCard.innerHTML = html;
 
@@ -396,6 +490,16 @@ class CommandViewer {
 
     metadataCard.querySelector('.test-terminal')?.addEventListener('click', () => {
       this.testInTerminal(frontmatter);
+    });
+
+    // Attach file link listeners
+    metadataCard.querySelectorAll('.file-link').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const filePath = e.target.dataset.path;
+        // Emit event for file tree to handle
+        window.dispatchEvent(new CustomEvent('open-file', { detail: { path: filePath } }));
+      });
     });
   }
 
