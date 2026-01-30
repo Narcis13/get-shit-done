@@ -82,7 +82,7 @@ A minimalist web-based IDE for managing the looppool-cc meta-prompting system.
 - [x] Parse file references to identify delegated workflow
 - [x] Create "View workflow" navigation link
 - [x] List spawned agents as clickable links
-- [ ] Show templates used as clickable links
+- [x] Show templates used as clickable links
 - [ ] Build tabbed view: metadata card vs raw content
 
 ## Priority 5: State Panel

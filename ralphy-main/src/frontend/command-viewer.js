@@ -505,7 +505,17 @@ class CommandViewer {
       html += '</div>';
     }
 
-    // TODO: Add template links
+    // Render template references
+    if (parsedReferences.templates.length > 0) {
+      html += '<div class="metadata-field">';
+      html += '<div class="metadata-label">Templates Used:</div>';
+      html += '<div class="metadata-value">';
+      parsedReferences.templates.forEach(template => {
+        html += `<a href="#" class="file-link" data-path="${template}">${template}</a>`;
+      });
+      html += '</div>';
+      html += '</div>';
+    }
 
     metadataCard.innerHTML = html;
 
