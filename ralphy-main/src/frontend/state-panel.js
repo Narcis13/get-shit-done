@@ -64,6 +64,9 @@ class StatePanel {
     // Load ROADMAP.md
     const roadmapData = await this.loadRoadmapMd();
     
+    // Load PLAN.md and calculate completion
+    const planData = await this.loadPlanMd();
+    
     // Parse markdown sections
     const sections = this.parseSections(content);
     
@@ -87,6 +90,28 @@ class StatePanel {
           <h3>Project Phases</h3>
           <div class="section-content">
             ${this.renderRoadmapPhases(roadmapData.phases)}
+          </div>
+        </div>
+      `;
+    }
+    
+    // Add PLAN.md task completion if available
+    if (planData && planData.tasks) {
+      const percentage = this.calculateTaskCompletion(planData.tasks);
+      html += `
+        <div class="state-section plan-section">
+          <h3>Task Progress</h3>
+          <div class="section-content">
+            <div class="task-completion-summary">
+              <span class="completion-label">Overall Completion:</span>
+              <div class="progress-bar large">
+                <div class="progress-fill" style="width: ${percentage}%"></div>
+              </div>
+              <span class="progress-value">${percentage}%</span>
+            </div>
+            <div class="task-stats">
+              <span>${planData.completedCount} of ${planData.totalCount} tasks completed</span>
+            </div>
           </div>
         </div>
       `;
@@ -298,7 +323,10 @@ class StatePanel {
     if (window.eventSource) {
       window.eventSource.addEventListener('file-change', (event) => {
         const data = JSON.parse(event.data);
-        if (data.path && data.path.includes('current-state.md')) {
+        if (data.path && (data.path.includes('current-state.md') || 
+            data.path.includes('PLAN.md') || 
+            data.path.includes('PROJECT.md') || 
+            data.path.includes('ROADMAP.md'))) {
           this.loadState();
         }
       });
@@ -413,6 +441,62 @@ class StatePanel {
     }).join('\n');
     
     return html;
+  }
+
+  async loadPlanMd() {
+    try {
+      const response = await fetch('/api/file?path=PLAN.md');
+      if (!response.ok) {
+        return null;
+      }
+      const text = await response.text();
+      return this.parsePlanTasks(text);
+    } catch (error) {
+      console.error('Failed to load PLAN.md:', error);
+      return null;
+    }
+  }
+
+  parsePlanTasks(text) {
+    const tasks = [];
+    const lines = text.split('\n');
+    let totalCount = 0;
+    let completedCount = 0;
+    
+    for (const line of lines) {
+      // Match checkbox pattern: [ ] or [x] or [X]
+      const checkboxMatch = line.match(/^\s*\[([xX ])\]\s+(.+)/);
+      if (checkboxMatch) {
+        const isCompleted = checkboxMatch[1].toLowerCase() === 'x';
+        const taskText = checkboxMatch[2];
+        
+        tasks.push({
+          completed: isCompleted,
+          text: taskText
+        });
+        
+        totalCount++;
+        if (isCompleted) {
+          completedCount++;
+        }
+      }
+    }
+    
+    return {
+      tasks,
+      totalCount,
+      completedCount
+    };
+  }
+
+  calculateTaskCompletion(tasks) {
+    if (tasks.length === 0) {
+      return 0;
+    }
+    
+    const completed = tasks.filter(task => task.completed).length;
+    const percentage = Math.round((completed / tasks.length) * 100);
+    return percentage;
   }
 
   destroy() {
@@ -717,6 +801,36 @@ const statePanelStyles = `
 .milestone-tasks li {
   margin: 4px 0;
   line-height: 1.5;
+}
+
+.plan-section {
+  background: #f0fdf4;
+  border: 1px solid #4ade80;
+}
+
+.task-completion-summary {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 10px;
+}
+
+.completion-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  min-width: 120px;
+}
+
+.progress-bar.large {
+  width: 200px;
+  height: 24px;
+}
+
+.task-stats {
+  font-size: 13px;
+  color: #666;
+  margin-top: 5px;
 }
 </style>
 `;

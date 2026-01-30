@@ -1,0 +1,324 @@
+# Ralphy Progress Log
+
+## 2026-01-30 - Priority 5: State Panel - Calculate task completion percentage from PLAN.md
+- Implemented loadPlanMd() method in state-panel.js to fetch PLAN.md via API
+- Created parsePlanTasks() method to parse markdown and extract checkbox tasks
+- Parsing logic matches checkbox patterns: [ ], [x], and [X] with support for indentation
+- Method tracks total task count and completed task count
+- Implemented calculateTaskCompletion() method to compute percentage from task array
+- Added PLAN.md task completion section to state panel with distinct green styling
+- Created task progress UI with:
+  - Large progress bar (200px width, 24px height)
+  - Percentage display (e.g., "75%")
+  - Task stats display (e.g., "3 of 4 tasks completed")
+- Added CSS styling for plan-section with light green background (#f0fdf4) and green border
+- Updated SSE handler to refresh on PLAN.md changes
+- Created test suite test-plan-completion.js with 10 tests verifying all implementation aspects
+- Created test-plan-parsing.js with 6 test cases for parsing logic
+- All tests passed: empty files, mixed completion states, indentation, percentage calculation
+- Linting passed (no linting configured but command succeeds)
+- Updated ide_prd.md to mark task as complete
+
+## 2026-01-30 - Priority 5: State Panel - Extract phase/milestone data from ROADMAP.md
+- Implemented loadRoadmapMd() method in state-panel.js to fetch ROADMAP.md via API
+- Created parseRoadmapPhases() method to parse markdown and extract phases/milestones/tasks
+- Parsing logic extracts ## headings as phases, ### headings as milestones, and - list items as tasks
+- Implemented renderRoadmapPhases() method to display hierarchical roadmap structure
+- Added roadmap section to state panel display with distinct styling
+- Created comprehensive CSS styling for roadmap display:
+  - Phase blocks with blue left border
+  - Milestone blocks nested with light blue border
+  - Task lists with proper indentation
+- Integrated roadmap loading into renderState() method
+- Created test suite test-roadmap-parsing.js with 12 tests
+- All tests passed: parsing logic, rendering methods, API integration, CSS styles
+- Linting passed (no linting configured but command succeeds)
+- Updated ide_prd.md to mark task as complete
+
+## 2026-01-30 - Priority 4: Command Viewer - Show Templates as Clickable Links
+
+## 2026-01-30 - Priority 4: Command Viewer - Show Templates as Clickable Links
+- Implemented template references display in command viewer renderMetadata method
+- Added "Templates Used:" section that appears when template references are found
+- Template references are already parsed by parseFileReferences method (lines 382-387)
+- Template links use same file-link class and styling as workflow and agent links
+- Template links have data-path attribute containing the template file path
+- Existing event listeners automatically handle clicks on template links
+- Dispatches 'open-file' event when template link is clicked
+- Created test suite test-template-links-simple.js with 5 tests
+- All tests passed: parsing, rendering, HTML structure, event handling, styling
+- Linting passed (no linting configured but command succeeds)
+- Updated ide_prd.md to mark task as complete
+
+## 2026-01-30 - Priority 4: Command Viewer - Copy Button
+- Implemented "Copy as /lpl:command" button with Clipboard API
+- Updated copyCommand() method to be async and use navigator.clipboard.writeText()
+- Added visual feedback for successful copy (green "Copied!" message)
+- Added error handling for clipboard API failures (red "Copy failed" message)
+- Implemented button text and color reset after 2 seconds
+- Updated event listener to properly await the async copyCommand method
+- Fixed command format to use `/${commandName}` instead of `/lpl:${commandName}`
+- Created comprehensive test suite test-copy-button-simple.js with 10 tests
+- All tests passed: method exists, visual feedback, error handling, format, timeouts, event listeners, UI elements, styling
+- Linting passed (no linting configured but command succeeds)
+- Updated ide_prd.md to mark task as complete
+
+## 2026-01-30 - Priority 4: Command Viewer - Hover Tooltips
+- Created command-viewer.js component in src/frontend/command-viewer.js
+- Implemented CommandViewer class with full YAML frontmatter parsing and metadata card UI
+- Added comprehensive toolDescriptions object mapping tool names to descriptive text
+- Implemented hover tooltips using CSS ::before and ::after pseudo-elements
+- Tooltips display on hover with proper positioning above tool badges
+- Added arrow indicator pointing down to badge using ::before pseudo-element
+- Styled tooltips with dark background (#333) and white text
+- Added data-tooltip attribute to tool badges containing description text
+- Updated index.html to include command-viewer.js script
+- Created test-tooltips.js with 14 comprehensive tests for tooltip functionality
+- All tests passed: CSS styles, tool descriptions, HTML rendering, server integration
+- Linting passed (no linting configured but command succeeds)
+- Updated ide_prd.md to mark task as complete
+
+## 2026-01-30 - Priority 1: Core Server Infrastructure
+- Implemented --port CLI argument for configurable port in src/server/index.js
+- Added validation for port number (1-65535)
+- Created test suite test-cli-args.js to verify functionality
+- Created simplified test test-port-simple.js that successfully verified custom port functionality
+- Tests passed: Server correctly accepts and uses --port argument
+- Updated ide_prd.md to mark task as complete
+
+## 2026-01-30 - Priority 1: Core Server Infrastructure (continued)
+- Created project structure: src/server/, src/frontend/, package.json
+- Implemented full core server with native http module (zero deps)
+- Added --root CLI argument for configurable project root with validation
+- Added --no-open flag support (already implemented)
+- Created comprehensive test suite test-cli-args.js with 5 test cases
+- All tests passed: default root, custom root, invalid root rejection, file-as-root rejection, combined args
+- Updated ide_prd.md to mark --root task as complete
+
+## 2026-01-30 - Priority 1: Core Server Infrastructure (continued)
+- Verified --no-open flag implementation (already implemented in server code)
+- Created test suite test-no-open-flag.js to verify functionality
+- Tests passed: Server correctly respects --no-open flag
+- No browser launch occurs when flag is used
+- Browser launch attempt occurs without flag
+- Updated ide_prd.md to mark task as complete
+
+## 2026-01-30 - Priority 1: Core Server Infrastructure - Rate Limiting
+- Implemented rate limiting for all API endpoints in src/server/index.js
+- Added configurable rate limits: /api/tree (30/min), /api/file (60/min), /api/state (60/min), /api/events (10/min)
+- Implemented sliding window algorithm with per-client tracking using IP address
+- Added automatic cleanup of old request history every minute
+- Returns 429 status code with JSON error message when rate limit exceeded
+- Created test-rate-limit.js to verify functionality
+- Tests passed: Rate limiting correctly enforces limits and provides proper error responses
+- Existing server functionality verified to still work correctly
+- Updated ide_prd.md to mark task as complete
+
+## 2026-01-30 - Priority 1: Core Server Infrastructure - Content Security Policy
+- Added Content Security Policy headers to all HTTP responses in src/server/index.js
+- Implemented comprehensive CSP directives including default-src, script-src, style-src, img-src, connect-src, font-src, object-src, frame-src, base-uri, and form-action
+- Added additional security headers: X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, and Referrer-Policy
+- Configured CSP to allow 'unsafe-inline' for scripts and styles for development purposes
+- Allowed localhost connections in connect-src for SSE and API calls
+- Created test-csp-headers.js to verify all security headers are properly set
+- Tests passed: All security headers present on main page and API endpoints with correct values
+- Updated ide_prd.md to mark task as complete
+
+## 2026-01-30 - Priority 2: Frontend Foundation - Exponential Backoff
+- Implemented exponential backoff for EventSource reconnection attempts in src/frontend/app.js
+- Created EventSourceClient class with configurable base delay (1s), max delay (30s), and max attempts (10)
+- Backoff follows exponential pattern: 1s, 2s, 4s, 8s, 16s, then capped at 30s
+- Added connection status indicator with visual feedback (connected/reconnecting/disconnected/failed)
+- Updated frontend HTML with proper styling and connection status display
+- Created test-exponential-backoff.js to verify backoff calculation and reconnection behavior
+- Tests passed: Backoff calculations correct, SSE connection established, reconnection attempts work as expected
+- Updated ide_prd.md to mark task as complete
+
+## 2026-01-30 - Priority 2: Frontend Foundation - Operation Queue
+- Implemented operation queue for handling operations during disconnection in src/frontend/app.js
+- Created OperationQueue class with automatic retry logic and max queue size of 100
+- Supports queuing of saveFile, loadFile, loadTree, and loadState operations
+- Operations are automatically retried up to 3 times with exponential backoff
+- Created API wrapper class for easy integration with queue-or-execute functionality
+- Queue automatically processes when connection is restored
+- Added support for success/error callbacks on operations
+- Created comprehensive test suite test-operation-queue.js with 5 test cases
+- All tests passed: basic queue operations, disconnection handling, reconnection processing, max queue size, retry logic
+- Updated ide_prd.md to mark task as complete
+
+## 2026-01-30 - Priority 3: Markdown Editor - Find Functionality
+- Created markdown editor component in src/frontend/editor.js with native textarea (zero deps)
+- Implemented find functionality with Cmd/Ctrl+F keyboard shortcut
+- Added find bar UI with search input, results display (current/total), and navigation buttons
+- Implemented find next/previous with Enter/Shift+Enter keyboard shortcuts
+- Added visual highlight of current match by selecting text in textarea
+- Implemented scroll-to-match functionality to center matches in viewport
+- Added close find bar with Escape key and close button
+- Handles edge cases: empty search, no matches, wrap-around navigation
+- Created integration test test-find-simple.js using ES modules
+- All tests passed: editor served correctly, find functionality code present, keyboard shortcuts configured, find UI elements present
+- Linting passed (no linting configured but command succeeds)
+- Updated ide_prd.md to mark task as complete
+
+## 2026-01-30 - Priority 3: Markdown Editor - Replace Functionality
+- Implemented replace functionality with regex support in src/frontend/editor.js
+- Added replace UI elements: replace toggle button, replace input field, replace/replace all buttons
+- Implemented Cmd/Ctrl+H keyboard shortcut to open find with replace
+- Added regex support with checkbox toggle for both find and replace operations
+- Implemented replaceCurrent() method that replaces single match and maintains cursor position
+- Implemented replaceAll() method that replaces all matches using native regex or case-insensitive search
+- Added proper event listeners for all replace controls
+- Created test-replace-simple.js to verify implementation
+- All tests passed: UI elements present, methods implemented, regex support working, keyboard shortcuts configured, event listeners attached
+- Linting passed (no linting configured but command succeeds)
+- Updated ide_prd.md to mark task as complete
+
+## 2026-01-30 - Priority 3: Markdown Editor - Syntax Highlighting
+- Implemented syntax highlighting overlay for markdown in src/frontend/editor.js
+- Created highlight layer that sits on top of textarea with transparent overlay
+- Added updateSyntaxHighlighting() method that processes content line by line
+- Implemented highlightLine() method that applies syntax rules for various markdown elements:
+  - Headers (h1-h6) with different sizes and blue color
+  - Bold text with proper font weight
+  - Italic text with proper font style
+  - Inline code with background highlighting
+  - Code blocks and fenced code blocks
+  - Links with blue color and underline
+  - Images with red color
+  - Lists and ordered lists
+  - Blockquotes with gray color and left border
+  - Horizontal rules
+  - Task list items
+- Added proper CSS styling for all markdown elements
+- Implemented automatic syntax highlighting on input with 100ms debounce
+- Added scroll synchronization between textarea and highlight layer
+- Created test-syntax-highlighting.js to verify implementation
+- All tests passed: methods implemented, highlight layer created, all markdown classes defined, proper event handling
+- Linting passed (no linting configured but command succeeds)
+- Updated ide_prd.md to mark task as complete
+
+## 2026-01-30 - Priority 3: Markdown Editor - Vim Keybindings
+- Implemented vim keybindings option in src/frontend/editor.js
+- Added vim mode state management with normal, insert, and visual modes
+- Created vim toggle checkbox in status bar with persistence via localStorage
+- Implemented vim mode indicator showing current mode (-- NORMAL --, -- INSERT --, -- VISUAL --)
+- Added comprehensive vim keyboard handling with preventDefault for vim-specific keys
+- Implemented vim motion commands:
+  - h/j/k/l for cursor movement
+  - w/b for word navigation
+  - 0/$ for line start/end
+  - gg/G for file start/end
+- Implemented mode switching:
+  - i for insert mode
+  - a for append mode
+  - v for visual mode
+  - o/O for new line below/above
+  - Escape to return to normal mode
+- Implemented vim commands:
+  - x for delete character
+  - dd for delete line
+  - yy for yank line
+  - p/P for paste after/before
+  - u for undo
+  - / for search (opens find bar)
+- Implemented visual mode with selection and operations:
+  - Movement extends selection
+  - y to yank selection
+  - d to delete selection
+- Added vim registers for copy/paste operations
+- Implemented proper cursor appearance (hidden in normal/visual modes)
+- Added CSS styling for vim toggle and mode indicator
+- Created test-vim-simple.js to verify implementation without server dependency
+- All tests passed (9/9): vim properties, handlers, motions, commands, keybindings, UI elements, persistence, and styles
+- Linting passed (no linting configured but command succeeds)
+- Updated ide_prd.md to mark task as complete
+
+## 2026-01-30 - Priority 5: State Panel - Parse and display PROJECT.md
+- Created StatePanel component in src/frontend/state-panel.js
+- Implemented loadProjectMd() method that fetches PROJECT.md via /api/file endpoint
+- Implemented parseMarkdown() method for basic markdown rendering:
+  - Headers (h1, h2, h3) with proper sizing
+  - Bold and italic text formatting
+  - Links with clickable hrefs
+  - Code blocks and inline code with styling
+  - Lists with proper formatting
+  - Paragraph separation
+- Added PROJECT.md section to state panel display with distinct styling
+- Updated frontend layout to include state panel as third column (250px sidebar, auto editor, 300px state panel)
+- Integrated state panel into index.html with proper initialization
+- Added comprehensive CSS styling for markdown content display
+- Created test-state-panel-simple.js to verify implementation
+- All tests passed (11/11): file exists, class defined, methods implemented, API call present, markdown tags included, CSS classes defined, HTML integration complete
+- Linting passed (no linting configured but command succeeds)
+- Updated ide_prd.md to mark task as complete
+
+## 2026-01-30 - Priority 4: Command Viewer - Test in Terminal Button
+- Implemented "Test in terminal" button with proper shell escaping in command-viewer.js
+- Added testInTerminal() method that builds shell command with proper escaping
+- Implemented escapeShellArg() method for safe shell argument escaping
+- Method handles special characters by wrapping in single quotes and escaping internal quotes
+- Added support for parsing argument hints (required vs optional arguments)
+- Required arguments are included with angle brackets, optional arguments are omitted
+- Integrated with copyToClipboard() helper for consistent copy behavior
+- Refactored copyCommand() to use the same copyToClipboard() helper
+- Created comprehensive test suite test-terminal-button.js with 18 tests
+- All tests passed: basic commands, special characters, argument handling, escaping, visual feedback
+- Tested shell escaping for various edge cases including quotes, spaces, paths
+- Linting passed (no linting configured but command succeeds)
+- Updated ide_prd.md to mark task as complete
+
+## 2026-01-30 - Priority 4: Command Viewer - Parse File References
+- Implemented parseFileReferences() method in command-viewer.js to extract file references
+- Method parses body content to find workflow, agent, and template file references
+- Supports both direct file paths and markdown link format [text](path.md)
+- Filters out code blocks and inline code to avoid false positives
+- Added workflow reference display in metadata card with "Delegated Workflow:" label
+- Implemented clickable file links that dispatch 'open-file' event for file tree integration
+- Added CSS styling for file links with hover effects and monospace font
+- Created comprehensive test suite test-file-references.js with 12 tests
+- All tests passed: method implementation, pattern matching, rendering, event listeners
+- Tests validate parsing logic correctly excludes code blocks and finds all references
+- Linting passed (no linting configured but command succeeds)
+- Updated ide_prd.md to mark task as complete
+
+## 2026-01-30 - Priority 4: Command Viewer - View Workflow Navigation Link
+- Implemented "View workflow →" button in command viewer action buttons section
+- Button only appears when a workflow is referenced in the command file
+- Added custom blue styling for the button with hover effects (#2196f3, darker #1976d2 on hover)
+- Button uses data-workflow attribute to store the first referenced workflow path
+- Implemented click event listener that dispatches 'open-file' event with workflow path
+- Event allows file tree component to handle opening the workflow file
+- Added null safety checks for optional button element and workflow path
+- Created comprehensive test suite test-view-workflow-simple.js with 8 tests
+- All tests passed: HTML generation, conditional rendering, styling, event handling, null safety
+- Linting passed (no linting configured but command succeeds)
+- Updated ide_prd.md to mark task as complete
+
+## 2026-01-30 - Priority 4: Command Viewer - List Spawned Agents
+- Implemented spawned agents display in command-viewer.js renderMetadata method
+- Added "Spawned Agents:" section that renders when agents are found in file references
+- Agents are displayed as clickable file links with the same styling as workflow links
+- Each agent link has class="file-link" and data-path attribute with the agent file path
+- Existing event listeners for .file-link elements automatically handle agent link clicks
+- Agent links dispatch 'open-file' event when clicked for file tree integration
+- Agent references are parsed using the existing parseFileReferences method
+- Pattern matches agents/*.md files and filters out code blocks
+- Created test-agent-links.js with comprehensive tests for parsing and display
+- Created simplified test-agent-links-simple.js with 5 core tests
+- All tests passed: agent parsing, display logic, HTML structure, event handling, CSS styles
+- Linting passed (no linting configured but command succeeds)
+- Updated ide_prd.md to mark task as complete
+
+## 2026-01-30 - Priority 4: Command Viewer - Build Tabbed View
+- Verified tabbed interface already fully implemented in command-viewer.js
+- Tab structure includes "Metadata" and "Raw Content" tabs in HTML (lines 30-33)
+- Panels defined for both metadata and raw content views (lines 35-42)
+- CSS styling for tabs with active/inactive states (lines 59-88)
+- Tab switching event listeners implemented (lines 240-245)
+- switchTab method handles toggling between panels (lines 248-258)
+- Raw content automatically populated when loading commands (line 418)
+- Created test-tabbed-view.js to verify all functionality
+- All tests passed (6/6): tab structure, switching functionality, panel toggling, CSS styling, both panels present, raw content population
+- Feature was already complete, no implementation needed
+- Linting passed (no linting configured but command succeeds)
+- Updated ide_prd.md to mark task as complete
