@@ -446,3 +446,35 @@
 - All tests passed successfully (10/10)
 - Linting passed (no linting configured but command succeeds)
 - Updated ide_prd.md to mark task as complete
+
+## 2026-01-30 - Priority 6: Graph Visualization - Create graph data parser extracting relationships from file content
+- Created GraphViewer class in src/frontend/graph-viewer.js
+- Implemented parseGraphData() async method that fetches file tree and extracts relationships
+- Created extractFiles() method that recursively traverses file tree and identifies relevant files:
+  - Commands: files in commands/ directory ending with .md
+  - Workflows: files in looppool/workflows/ directory ending with .md
+  - Agents: files in agents/ directory ending with .md
+  - Templates: files in looppool/templates/ directory ending with .md
+- Implemented parseFileRelationships() method that fetches file content via API and parses based on type
+- Created parseCommandRelationships() method that extracts workflow references from commands:
+  - Pattern matches looppool/workflows/*.md files
+  - Filters out matches inside code blocks
+  - Creates "delegates-to" edge type
+- Created parseWorkflowRelationships() method that extracts agent references from workflows:
+  - Pattern matches agents/*.md files
+  - Filters out matches inside code blocks
+  - Creates "spawns" edge type
+- Created parseAgentRelationships() method that extracts template references from agents:
+  - Pattern matches looppool/templates/*.md files
+  - Filters out matches inside code blocks
+  - Creates "uses" edge type
+- Implemented addRelationship() method that ensures nodes exist and creates edges
+- Added node and edge data structures:
+  - Nodes have: id (file path), name (filename without .md), type, and path
+  - Edges have: source (node id), target (node id), and type (relationship type)
+- Used Map for efficient node lookup and deduplication
+- Added HTML structure with filters and search UI
+- Created comprehensive test suite test-graph-parser-es.js with 10 tests
+- All tests passed: class definition, method implementations, pattern matching, relationship types
+- Linting passed (no linting configured but command succeeds)
+- Updated ide_prd.md to mark task as complete
