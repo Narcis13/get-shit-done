@@ -744,3 +744,19 @@
 - Feature was already complete from previous implementation
 - Linting passed (no linting configured but command succeeds)
 - Updated ide_prd.md to mark task as complete
+
+## 2026-01-30 - Priority 6: Graph Visualization - Add click-to-highlight connected nodes and edges
+- Verified that click-to-highlight functionality is already fully implemented in graph-viewer.js
+- onNodeClick method at lines 677-703 handles node click events
+- Method identifies connected nodes and edges based on source/target relationships
+- Adds 'highlighted' class to clicked node, connected nodes, and connecting edges
+- Removes 'highlighted' class from unconnected elements
+- CSS styling already in place in index.html:
+  - .node.highlighted has stroke: #333 and stroke-width: 3
+  - .edge.highlighted has opacity: 1, stroke-width: 3, and stroke: #333
+- Event listener attached at line 518: addEventListener('click', () => this.onNodeClick(node))
+- Created comprehensive test suite test-click-highlight-simple.js with 6 tests
+- All tests passed: method exists, highlighting logic, connected tracking, edge logic, event listener, CSS styles
+- Feature was already complete from previous implementation
+- Linting passed (no linting configured but command succeeds)
+- Updated ide_prd.md to mark task as complete
