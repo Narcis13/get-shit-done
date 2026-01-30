@@ -68,12 +68,15 @@ class StatePanel {
 
     // Load PROJECT.md
     const projectHtml = await this.loadProjectMd();
+    this.projectData = projectHtml;
     
     // Load ROADMAP.md
     const roadmapData = await this.loadRoadmapMd();
+    this.roadmapData = roadmapData;
     
     // Load PLAN.md and calculate completion
     const planData = await this.loadPlanMd();
+    this.planData = planData;
     
     // Parse markdown sections
     const sections = this.parseSections(content);
@@ -572,6 +575,9 @@ class StatePanel {
           <button class="quick-action-btn view-decisions-btn" data-path="DECISIONS.md">
             📋 View decisions
           </button>
+          <button class="quick-action-btn progress-summary-btn">
+            📊 Progress summary
+          </button>
         </div>
       </div>
     `;
@@ -677,6 +683,11 @@ class StatePanel {
         const event = new CustomEvent('open-file', { detail: { path } });
         document.dispatchEvent(event);
       }
+      
+      // Progress summary button
+      if (e.target.classList.contains('progress-summary-btn')) {
+        this.showProgressSummary();
+      }
     });
   }
 
@@ -720,6 +731,73 @@ class StatePanel {
         >${percentage}%</text>
       </svg>
     `;
+  }
+
+  async generateProgressSummary() {
+    const summary = {
+      project: null,
+      planTasks: null,
+      roadmap: null,
+      timestamp: new Date().toLocaleString()
+    };
+
+    // Get project info
+    if (this.projectData) {
+      const projectName = this.projectData.match(/^#\s+(.+)$/m);
+      summary.project = projectName ? projectName[1] : 'Unknown Project';
+    }
+
+    // Get task completion info
+    if (this.planData) {
+      summary.planTasks = {
+        total: this.planData.totalCount,
+        completed: this.planData.completedCount,
+        percentage: this.calculateTaskCompletion(this.planData.tasks)
+      };
+    }
+
+    // Get roadmap info
+    if (this.roadmapData) {
+      summary.roadmap = {
+        totalPhases: this.roadmapData.length,
+        totalMilestones: this.roadmapData.reduce((sum, phase) => sum + phase.milestones.length, 0),
+        totalTasks: this.roadmapData.reduce((sum, phase) => 
+          sum + phase.milestones.reduce((mSum, milestone) => mSum + milestone.tasks.length, 0), 0)
+      };
+    }
+
+    return summary;
+  }
+
+  showProgressSummary() {
+    this.generateProgressSummary().then(summary => {
+      let message = `📊 Project Progress Summary\n`;
+      message += `Generated: ${summary.timestamp}\n\n`;
+      
+      if (summary.project) {
+        message += `Project: ${summary.project}\n\n`;
+      }
+      
+      if (summary.planTasks) {
+        message += `Task Completion:\n`;
+        message += `✅ Completed: ${summary.planTasks.completed} tasks\n`;
+        message += `📝 Total: ${summary.planTasks.total} tasks\n`;
+        message += `📈 Progress: ${summary.planTasks.percentage}%\n\n`;
+      }
+      
+      if (summary.roadmap) {
+        message += `Roadmap Overview:\n`;
+        message += `🎯 Phases: ${summary.roadmap.totalPhases}\n`;
+        message += `🏁 Milestones: ${summary.roadmap.totalMilestones}\n`;
+        message += `📋 Total Tasks: ${summary.roadmap.totalTasks}\n`;
+      }
+      
+      if (!summary.planTasks && !summary.roadmap) {
+        message += `No progress data available. Please ensure PROJECT.md, PLAN.md, and ROADMAP.md files exist.`;
+      }
+      
+      alert(message);
+    });
   }
 
   destroy() {
@@ -1276,6 +1354,18 @@ const statePanelStyles = `
 
 .view-decisions-btn:active {
   background: #5b21b6;
+}
+
+.progress-summary-btn {
+  background: #f59e0b;
+}
+
+.progress-summary-btn:hover {
+  background: #d97706;
+}
+
+.progress-summary-btn:active {
+  background: #b45309;
 }
 </style>
 `;

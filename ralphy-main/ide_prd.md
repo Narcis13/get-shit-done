@@ -105,7 +105,7 @@ A minimalist web-based IDE for managing the looppool-cc meta-prompting system.
 - [x] Create collapsible planning document tree
 - [x] Implement "Resume work" button opening CONTINUE_HERE.md
 - [x] Add "View decisions" button linking to DECISIONS.md
-- [ ] Add progress summary quick action
+- [x] Add progress summary quick action
 
 ## Priority 6: Graph Visualization
 
