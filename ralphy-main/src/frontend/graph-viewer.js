@@ -449,6 +449,15 @@ class GraphViewer {
       simplifyEdges: false
     };
     
+    // Canvas rendering for 200+ nodes
+    this.useCanvas = false;
+    this.canvas = null;
+    this.ctx = null;
+    this.canvasNodeRadius = 6;
+    this.canvasHighlightedNodes = new Set();
+    this.canvasHighlightedEdges = new Set();
+    this.canvasHoveredNode = null;
+    
     this.setupHTML();
   }
 
@@ -818,6 +827,26 @@ class GraphViewer {
 
   renderGraph(graphData) {
     // Clear canvas
+    this.canvas.innerHTML = '';
+    
+    // Get dimensions
+    const rect = this.canvas.getBoundingClientRect();
+    
+    // Decide whether to use canvas based on node count
+    const nodeCount = graphData.nodes.length;
+    this.useCanvas = nodeCount >= 200;
+    
+    if (this.useCanvas) {
+      // Use canvas rendering for 200+ nodes
+      this.renderGraphCanvas(graphData);
+    } else {
+      // Use SVG rendering for fewer nodes
+      this.renderGraphSVG(graphData);
+    }
+  }
+  
+  renderGraphSVG(graphData) {
+    // Original SVG rendering code
     this.canvas.innerHTML = '<svg class="graph-svg"></svg>';
     const svg = this.canvas.querySelector('.graph-svg');
     
@@ -1286,12 +1315,14 @@ class GraphViewer {
       ...this.performanceStats,
       quadtreeEnabled: this.simulation?.useQuadtree || false,
       levelOfDetailEnabled: this.levelOfDetail.enabled,
+      canvasRenderingEnabled: this.useCanvas,
       optimizationsActive: {
         quadtree: this.simulation?.useQuadtree || false,
         levelOfDetail: this.levelOfDetail.enabled,
         viewportCulling: true,
         batchedUpdates: true,
-        simplifiedEdges: this.levelOfDetail.simplifyEdges
+        simplifiedEdges: this.levelOfDetail.simplifyEdges,
+        canvasRendering: this.useCanvas
       },
       recommendations: this.getPerformanceRecommendations()
     };
@@ -1314,6 +1345,580 @@ class GraphViewer {
     }
     
     return recommendations;
+  }
+  
+  // Canvas rendering implementation for 200+ nodes
+  renderGraphCanvas(graphData) {
+    // Create canvas element
+    const canvasElement = document.createElement('canvas');
+    canvasElement.className = 'graph-canvas';
+    canvasElement.width = this.canvas.clientWidth;
+    canvasElement.height = this.canvas.clientHeight;
+    this.canvas.appendChild(canvasElement);
+    
+    this.canvasElement = canvasElement;
+    this.ctx = canvasElement.getContext('2d');
+    
+    // Store dimensions
+    const rect = this.canvas.getBoundingClientRect();
+    
+    // Initialize force simulation with aggressive optimizations
+    const performanceOptions = {
+      width: rect.width,
+      height: rect.height,
+      charge: -300,
+      linkDistance: (edge) => {
+        if (edge.type === 'delegates-to') return 150;
+        if (edge.type === 'spawns') return 120;
+        if (edge.type === 'uses') return 100;
+        return 100;
+      },
+      // Aggressive optimizations for 200+ nodes
+      alphaDecay: 0.1, // Much faster decay
+      alphaMin: 0.05, // Stop simulation earlier
+      velocityDecay: 0.2 // More damping
+    };
+    
+    this.simulation = new ForceSimulation(graphData.nodes, graphData.edges, performanceOptions);
+    
+    // Update nodeMap
+    this.nodeMap.clear();
+    graphData.nodes.forEach(node => {
+      this.nodeMap.set(node.id, node);
+    });
+    
+    // Store references for interaction
+    this.canvasNodes = graphData.nodes;
+    this.canvasEdges = graphData.edges;
+    
+    // Set up canvas transform state
+    this.canvasTransform = {
+      scale: 1,
+      translateX: 0,
+      translateY: 0
+    };
+    
+    // Set up canvas event handlers
+    this.setupCanvasEvents(canvasElement);
+    
+    // Animation loop for canvas
+    let animationId;
+    const animate = () => {
+      this.drawCanvas();
+      animationId = requestAnimationFrame(animate);
+    };
+    
+    // Start simulation
+    this.simulation.on('tick', () => {
+      // No need to do anything here, drawing is handled by animation loop
+    });
+    
+    this.simulation.start();
+    animate();
+    
+    // Store animation ID for cleanup
+    this._canvasAnimationId = animationId;
+    
+    // Initialize filters and node count
+    this.updateFilters();
+  }
+  
+  drawCanvas() {
+    const ctx = this.ctx;
+    const canvas = this.canvasElement;
+    const transform = this.canvasTransform;
+    
+    // Performance tracking
+    const startTime = performance.now();
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Save context state
+    ctx.save();
+    
+    // Apply transformation
+    ctx.translate(transform.translateX, transform.translateY);
+    ctx.scale(transform.scale, transform.scale);
+    
+    // Draw edges (skip at very low zoom)
+    if (transform.scale > 0.2) {
+      ctx.strokeStyle = '#999';
+      ctx.lineWidth = 1 / transform.scale; // Keep constant visual width
+      ctx.globalAlpha = 0.6;
+      
+      this.canvasEdges.forEach(edge => {
+        const source = this.simulation.getNodeById(edge.source);
+        const target = this.simulation.getNodeById(edge.target);
+        
+        if (source && target) {
+          // Check if nodes are filtered
+          const sourceNode = this.nodeMap.get(edge.source);
+          const targetNode = this.nodeMap.get(edge.target);
+          const filters = this.activeFilters || { command: true, workflow: true, agent: true, template: true };
+          
+          if (filters[sourceNode?.type] && filters[targetNode?.type]) {
+            // Highlight check
+            const isHighlighted = this.canvasHighlightedEdges.has(`${edge.source}-${edge.target}`);
+            if (isHighlighted) {
+              ctx.strokeStyle = '#333';
+              ctx.lineWidth = 3 / transform.scale;
+              ctx.globalAlpha = 1;
+            }
+            
+            ctx.beginPath();
+            ctx.moveTo(source.x, source.y);
+            ctx.lineTo(target.x, target.y);
+            ctx.stroke();
+            
+            // Draw arrow (simplified for performance)
+            if (transform.scale > 0.5) {
+              const angle = Math.atan2(target.y - source.y, target.x - source.x);
+              const arrowLength = 10 / transform.scale;
+              const nodeRadius = this.canvasNodeRadius;
+              const endX = target.x - Math.cos(angle) * nodeRadius;
+              const endY = target.y - Math.sin(angle) * nodeRadius;
+              
+              ctx.beginPath();
+              ctx.moveTo(endX, endY);
+              ctx.lineTo(endX - arrowLength * Math.cos(angle - Math.PI/6), 
+                        endY - arrowLength * Math.sin(angle - Math.PI/6));
+              ctx.moveTo(endX, endY);
+              ctx.lineTo(endX - arrowLength * Math.cos(angle + Math.PI/6), 
+                        endY - arrowLength * Math.sin(angle + Math.PI/6));
+              ctx.stroke();
+            }
+            
+            // Reset styles
+            if (isHighlighted) {
+              ctx.strokeStyle = '#999';
+              ctx.lineWidth = 1 / transform.scale;
+              ctx.globalAlpha = 0.6;
+            }
+          }
+        }
+      });
+    }
+    
+    // Draw nodes
+    ctx.globalAlpha = 1;
+    this.canvasNodes.forEach(node => {
+      const simNode = this.simulation.getNodeById(node.id);
+      if (!simNode) return;
+      
+      const filters = this.activeFilters || { command: true, workflow: true, agent: true, template: true };
+      if (!filters[node.type]) return;
+      
+      // Check search query
+      if (this._canvasSearchQuery && !node.name.toLowerCase().includes(this._canvasSearchQuery)) {
+        return;
+      }
+      
+      // Node circle
+      ctx.beginPath();
+      ctx.arc(simNode.x, simNode.y, this.canvasNodeRadius, 0, 2 * Math.PI);
+      ctx.fillStyle = this.getNodeColor(node.type);
+      ctx.fill();
+      
+      // Highlight check
+      if (this.canvasHighlightedNodes.has(node.id)) {
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 3 / transform.scale;
+        ctx.stroke();
+      } else {
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2 / transform.scale;
+        ctx.stroke();
+      }
+      
+      // Draw text labels only at reasonable zoom levels
+      if (transform.scale > 0.4) {
+        ctx.fillStyle = '#333';
+        ctx.font = `${12 / transform.scale}px sans-serif`;
+        ctx.textBaseline = 'middle';
+        ctx.fillText(node.name, simNode.x + 10, simNode.y);
+      }
+      
+      // Hover highlight
+      if (this.canvasHoveredNode === node.id) {
+        ctx.beginPath();
+        ctx.arc(simNode.x, simNode.y, this.canvasNodeRadius + 4, 0, 2 * Math.PI);
+        ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+        ctx.lineWidth = 2 / transform.scale;
+        ctx.stroke();
+      }
+    });
+    
+    // Restore context
+    ctx.restore();
+    
+    // Update performance stats
+    const renderTime = performance.now() - startTime;
+    this.performanceStats.lastRenderTime = renderTime;
+    this.performanceStats.renderTimes.push(renderTime);
+    if (this.performanceStats.renderTimes.length > 60) {
+      this.performanceStats.renderTimes.shift();
+    }
+    const sum = this.performanceStats.renderTimes.reduce((a, b) => a + b, 0);
+    this.performanceStats.avgRenderTime = sum / this.performanceStats.renderTimes.length;
+  }
+  
+  setupCanvasEvents(canvas) {
+    let isDragging = false;
+    let isPanning = false;
+    let draggedNode = null;
+    let lastMouseX = 0;
+    let lastMouseY = 0;
+    
+    // Convert mouse coordinates to graph coordinates
+    const mouseToGraph = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const transform = this.canvasTransform;
+      return {
+        x: (x - transform.translateX) / transform.scale,
+        y: (y - transform.translateY) / transform.scale
+      };
+    };
+    
+    // Find node at position
+    const getNodeAt = (x, y) => {
+      for (const node of this.canvasNodes) {
+        const simNode = this.simulation.getNodeById(node.id);
+        if (simNode) {
+          const dx = simNode.x - x;
+          const dy = simNode.y - y;
+          if (dx * dx + dy * dy <= this.canvasNodeRadius * this.canvasNodeRadius) {
+            return node;
+          }
+        }
+      }
+      return null;
+    };
+    
+    // Mouse down
+    canvas.addEventListener('mousedown', (e) => {
+      const pos = mouseToGraph(e);
+      const node = getNodeAt(pos.x, pos.y);
+      
+      if (node) {
+        isDragging = true;
+        draggedNode = node;
+        const simNode = this.simulation.getNodeById(node.id);
+        if (simNode) {
+          simNode._isDragging = true;
+        }
+      } else {
+        isPanning = true;
+        canvas.style.cursor = 'grab';
+      }
+      
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+      e.preventDefault();
+    });
+    
+    // Mouse move
+    canvas.addEventListener('mousemove', (e) => {
+      const pos = mouseToGraph(e);
+      
+      if (isDragging && draggedNode) {
+        const simNode = this.simulation.getNodeById(draggedNode.id);
+        if (simNode) {
+          simNode.x = pos.x;
+          simNode.y = pos.y;
+          simNode.fx = pos.x;
+          simNode.fy = pos.y;
+        }
+      } else if (isPanning) {
+        const dx = e.clientX - lastMouseX;
+        const dy = e.clientY - lastMouseY;
+        this.canvasTransform.translateX += dx;
+        this.canvasTransform.translateY += dy;
+        canvas.style.cursor = 'grabbing';
+      } else {
+        // Hover detection
+        const node = getNodeAt(pos.x, pos.y);
+        if (node) {
+          canvas.style.cursor = 'pointer';
+          if (this.canvasHoveredNode !== node.id) {
+            this.canvasHoveredNode = node.id;
+            this.onNodeHover(node);
+          }
+        } else {
+          canvas.style.cursor = 'default';
+          if (this.canvasHoveredNode) {
+            this.canvasHoveredNode = null;
+            this.onNodeLeave(null);
+          }
+        }
+      }
+      
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+    });
+    
+    // Mouse up
+    canvas.addEventListener('mouseup', (e) => {
+      if (isDragging && draggedNode) {
+        const simNode = this.simulation.getNodeById(draggedNode.id);
+        if (simNode) {
+          simNode._isDragging = false;
+          simNode.fx = null;
+          simNode.fy = null;
+        }
+      }
+      
+      isDragging = false;
+      isPanning = false;
+      draggedNode = null;
+      canvas.style.cursor = 'default';
+    });
+    
+    // Click
+    canvas.addEventListener('click', (e) => {
+      const pos = mouseToGraph(e);
+      const node = getNodeAt(pos.x, pos.y);
+      if (node) {
+        this.onNodeClickCanvas(node);
+      }
+    });
+    
+    // Double click
+    canvas.addEventListener('dblclick', (e) => {
+      const pos = mouseToGraph(e);
+      const node = getNodeAt(pos.x, pos.y);
+      if (node) {
+        this.onNodeDoubleClick(node);
+      }
+    });
+    
+    // Wheel for zoom
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? 0.9 : 1.1;
+      const newScale = this.canvasTransform.scale * delta;
+      
+      if (newScale >= 0.1 && newScale <= 4) {
+        // Zoom towards mouse position
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        
+        const transform = this.canvasTransform;
+        
+        // Calculate new translate to keep mouse position fixed
+        transform.translateX = mouseX - (mouseX - transform.translateX) * delta;
+        transform.translateY = mouseY - (mouseY - transform.translateY) * delta;
+        transform.scale = newScale;
+      }
+    });
+  }
+  
+  onNodeClickCanvas(node) {
+    // Clear previous highlights
+    this.canvasHighlightedNodes.clear();
+    this.canvasHighlightedEdges.clear();
+    
+    // Highlight clicked node
+    this.canvasHighlightedNodes.add(node.id);
+    
+    // Find and highlight connected nodes and edges
+    this.canvasEdges.forEach(edge => {
+      if (edge.source === node.id) {
+        this.canvasHighlightedNodes.add(edge.target);
+        this.canvasHighlightedEdges.add(`${edge.source}-${edge.target}`);
+      } else if (edge.target === node.id) {
+        this.canvasHighlightedNodes.add(edge.source);
+        this.canvasHighlightedEdges.add(`${edge.source}-${edge.target}`);
+      }
+    });
+  }
+  
+  // Override updateFilters for canvas support
+  updateFilters() {
+    if (this.useCanvas) {
+      // Canvas-specific filter update
+      const filters = {
+        command: this.container.querySelector('.filter-commands').checked,
+        workflow: this.container.querySelector('.filter-workflows').checked,
+        agent: this.container.querySelector('.filter-agents').checked,
+        template: this.container.querySelector('.filter-templates').checked
+      };
+      
+      this.activeFilters = filters;
+      
+      // Update node count
+      const visibleNodes = this.canvasNodes?.filter(node => filters[node.type]).length || 0;
+      const totalNodes = this.canvasNodes?.length || 0;
+      this.updateNodeCountDisplay(visibleNodes, totalNodes);
+      
+      // Force redraw
+      this.drawCanvas();
+    } else {
+      // Original SVG filter update code
+      const filters = {
+        command: this.container.querySelector('.filter-commands').checked,
+        workflow: this.container.querySelector('.filter-workflows').checked,
+        agent: this.container.querySelector('.filter-agents').checked,
+        template: this.container.querySelector('.filter-templates').checked
+      };
+
+      // Store filter state
+      this.activeFilters = filters;
+      
+      // Get current search query
+      const searchInput = this.container.querySelector('.graph-search');
+      const searchQuery = searchInput?.value?.toLowerCase().trim() || '';
+
+      // Apply filters to nodes
+      this.nodeElements?.forEach(({ element, data }) => {
+        const typeFilterActive = filters[data.type];
+        const nameMatches = !searchQuery || data.name.toLowerCase().includes(searchQuery);
+        const isVisible = typeFilterActive && nameMatches;
+        
+        // Use SVG visibility attribute instead of display style
+        if (isVisible) {
+          element.removeAttribute('visibility');
+          element.classList.remove('filtered-out');
+        } else {
+          element.setAttribute('visibility', 'hidden');
+          element.classList.add('filtered-out');
+        }
+        
+        // Update simulation node to stop physics on hidden nodes
+        const simNode = this.simulation?.getNodeById(data.id);
+        if (simNode) {
+          if (!isVisible) {
+            // Fix position when hiding
+            simNode.fx = simNode.x;
+            simNode.fy = simNode.y;
+          } else {
+            // Unfix position when showing (unless being dragged)
+            if (!simNode._isDragging) {
+              simNode.fx = null;
+              simNode.fy = null;
+            }
+          }
+        }
+      });
+
+      // Apply filters to edges (hide edges where source or target is hidden)
+      this.edgeElements?.forEach(({ element, data }) => {
+        const sourceNode = this.nodeMap.get(data.source);
+        const targetNode = this.nodeMap.get(data.target);
+        const isVisible = filters[sourceNode?.type] && filters[targetNode?.type];
+        
+        // Use SVG visibility attribute
+        if (isVisible) {
+          element.removeAttribute('visibility');
+          element.classList.remove('filtered-out');
+        } else {
+          element.setAttribute('visibility', 'hidden');
+          element.classList.add('filtered-out');
+        }
+      });
+
+      // Update visible node count display
+      const visibleNodes = this.nodeElements?.filter(({ data }) => filters[data.type]).length || 0;
+      const totalNodes = this.nodeElements?.length || 0;
+      this.updateNodeCountDisplay(visibleNodes, totalNodes);
+
+      // Restart simulation with lower alpha for smooth repositioning
+      if (this.simulation && visibleNodes > 0) {
+        this.simulation.options.alpha = 0.3;
+        this.simulation.start();
+      }
+    }
+  }
+  
+  // Override searchNodes for canvas support
+  searchNodes(query) {
+    if (this.useCanvas) {
+      // Canvas search is handled by updateFilters redraw
+      const searchQuery = query.toLowerCase().trim();
+      this._canvasSearchQuery = searchQuery;
+      this.drawCanvas();
+    } else {
+      // Original SVG search code
+      const searchQuery = query.toLowerCase().trim();
+      
+      // If query is empty, show all nodes (respecting filters)
+      if (!searchQuery) {
+        this.updateFilters();
+        return;
+      }
+      
+      // Apply search filter to nodes
+      this.nodeElements?.forEach(({ element, data }) => {
+        // Check if node type is filtered out
+        const typeFilterActive = this.activeFilters && this.activeFilters[data.type];
+        
+        // Check if node name matches search query
+        const nameMatches = data.name.toLowerCase().includes(searchQuery);
+        
+        // Node is visible if it matches search AND type filter is active
+        const isVisible = nameMatches && typeFilterActive;
+        
+        // Apply visibility
+        if (isVisible) {
+          element.removeAttribute('visibility');
+          element.classList.remove('filtered-out');
+          element.classList.remove('search-filtered');
+        } else {
+          element.setAttribute('visibility', 'hidden');
+          element.classList.add('filtered-out');
+          if (!nameMatches) {
+            element.classList.add('search-filtered');
+          }
+        }
+        
+        // Update simulation node
+        const simNode = this.simulation?.getNodeById(data.id);
+        if (simNode) {
+          if (!isVisible) {
+            // Fix position when hiding
+            simNode.fx = simNode.x;
+            simNode.fy = simNode.y;
+          } else {
+            // Unfix position when showing (unless being dragged)
+            if (!simNode._isDragging) {
+              simNode.fx = null;
+              simNode.fy = null;
+            }
+          }
+        }
+      });
+      
+      // Update edge visibility based on connected nodes
+      this.edgeElements?.forEach(({ element, data }) => {
+        const sourceElement = this.nodeElements?.find(n => n.data.id === data.source);
+        const targetElement = this.nodeElements?.find(n => n.data.id === data.target);
+        
+        const sourceVisible = sourceElement && !sourceElement.element.hasAttribute('visibility');
+        const targetVisible = targetElement && !targetElement.element.hasAttribute('visibility');
+        
+        if (sourceVisible && targetVisible) {
+          element.removeAttribute('visibility');
+        } else {
+          element.setAttribute('visibility', 'hidden');
+        }
+      });
+      
+      // Update node count display
+      const visibleNodes = this.nodeElements?.filter(({ element }) => 
+        !element.hasAttribute('visibility')
+      ).length || 0;
+      const totalNodes = this.nodeElements?.length || 0;
+      this.updateNodeCountDisplay(visibleNodes, totalNodes);
+      
+      // Restart simulation if needed
+      if (this.simulation && visibleNodes > 0) {
+        this.simulation.options.alpha = 0.3;
+        this.simulation.start();
+      }
+    }
   }
 }
 

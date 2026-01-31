@@ -130,7 +130,7 @@ A minimalist web-based IDE for managing the looppool-cc meta-prompting system.
 - [x] Add search/filter by node name
 - [x] Ensure performant rendering for 50+ nodes
 - [x] Optimize for 100+ nodes
-- [ ] Add canvas fallback for 200+ nodes if SVG degrades
+- [x] Add canvas fallback for 200+ nodes if SVG degrades
 - [ ] Implement layout persistence in localStorage
 
 ## Priority 7: Polish and Performance

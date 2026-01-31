@@ -177,6 +177,25 @@
       border-color: #2196f3;
       box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
     }
+    
+    /* Canvas graph styles */
+    .graph-canvas canvas {
+      width: 100%;
+      height: 100%;
+      cursor: default;
+    }
+    
+    .graph-canvas canvas[style*="cursor: grab"] {
+      cursor: grab !important;
+    }
+    
+    .graph-canvas canvas[style*="cursor: grabbing"] {
+      cursor: grabbing !important;
+    }
+    
+    .graph-canvas canvas[style*="cursor: pointer"] {
+      cursor: pointer !important;
+    }
   </style>
 </head>
 <body>
