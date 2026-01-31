@@ -458,6 +458,10 @@ class GraphViewer {
     this.canvasHighlightedEdges = new Set();
     this.canvasHoveredNode = null;
     
+    // Layout persistence
+    this.layoutStorageKey = 'lpl-graph-layout';
+    this.savedLayout = null;
+    
     this.setupHTML();
   }
 
@@ -473,6 +477,10 @@ class GraphViewer {
             <label><input type="checkbox" class="filter-templates" checked> Templates</label>
           </div>
           <input type="text" class="graph-search" placeholder="Search nodes...">
+          <div class="graph-layout-controls">
+            <button class="btn-save-layout" title="Save current layout">Save Layout</button>
+            <button class="btn-reset-layout" title="Reset to default layout">Reset Layout</button>
+          </div>
         </div>
         <div class="graph-canvas"></div>
       </div>
@@ -492,6 +500,30 @@ class GraphViewer {
     // Search input
     const searchInput = this.container.querySelector('.graph-search');
     searchInput.addEventListener('input', (e) => this.searchNodes(e.target.value));
+    
+    // Layout control buttons
+    const saveBtn = this.container.querySelector('.btn-save-layout');
+    const resetBtn = this.container.querySelector('.btn-reset-layout');
+    
+    saveBtn?.addEventListener('click', () => {
+      if (this.saveLayout()) {
+        // Provide visual feedback
+        saveBtn.textContent = 'Saved!';
+        saveBtn.style.background = '#4caf50';
+        setTimeout(() => {
+          saveBtn.textContent = 'Save Layout';
+          saveBtn.style.background = '';
+        }, 2000);
+      }
+    });
+    
+    resetBtn?.addEventListener('click', () => {
+      if (confirm('Reset to default layout? This will clear your saved positions.')) {
+        this.clearLayout();
+        // Reload the graph to apply default layout
+        this.loadGraph();
+      }
+    });
   }
 
   // Parse graph data from file relationships
@@ -822,6 +854,10 @@ class GraphViewer {
   async loadGraph() {
     const graphData = await this.parseGraphData();
     console.log('Graph data parsed:', graphData);
+    
+    // Load saved layout if available
+    this.loadLayout();
+    
     this.renderGraph(graphData);
   }
 
@@ -901,6 +937,14 @@ class GraphViewer {
     }
     
     this.simulation = new ForceSimulation(graphData.nodes, graphData.edges, performanceOptions);
+    
+    // Apply saved layout if available
+    if (this.savedLayout) {
+      this.applyLayout(this.savedLayout);
+    }
+    
+    // Set up auto-save
+    this.setupAutoSave();
     
     // Create edge elements
     const edgeGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -1166,6 +1210,11 @@ class GraphViewer {
             simNode.fy = null;
           }
         }
+        
+        // Auto-save layout after dragging
+        if (this._autoSave) {
+          this._autoSave();
+        }
       }
     });
   }
@@ -1186,6 +1235,11 @@ class GraphViewer {
       if (newScale >= minScale && newScale <= maxScale) {
         scale = newScale;
         this.updateTransform(svg, scale, translateX, translateY);
+        
+        // Auto-save layout after zoom
+        if (this._autoSave) {
+          this._autoSave();
+        }
       }
     });
     
@@ -1214,8 +1268,15 @@ class GraphViewer {
     });
     
     svg.addEventListener('mouseup', () => {
-      isPanning = false;
-      svg.style.cursor = 'auto';
+      if (isPanning) {
+        isPanning = false;
+        svg.style.cursor = 'auto';
+        
+        // Auto-save layout after pan
+        if (this._autoSave) {
+          this._autoSave();
+        }
+      }
     });
   }
 
@@ -1347,6 +1408,125 @@ class GraphViewer {
     return recommendations;
   }
   
+  // Save current layout to localStorage
+  saveLayout() {
+    const layoutData = {
+      version: 1,
+      timestamp: Date.now(),
+      transform: this.useCanvas ? this.canvasTransform : this.transform,
+      filters: this.activeFilters,
+      nodePositions: {}
+    };
+    
+    // Save node positions
+    if (this.simulation) {
+      this.nodes.forEach(node => {
+        const simNode = this.simulation.getNodeById(node.id);
+        if (simNode) {
+          layoutData.nodePositions[node.id] = {
+            x: simNode.x,
+            y: simNode.y,
+            fx: simNode.fx,
+            fy: simNode.fy
+          };
+        }
+      });
+    }
+    
+    // Save to localStorage
+    try {
+      localStorage.setItem(this.layoutStorageKey, JSON.stringify(layoutData));
+      return true;
+    } catch (e) {
+      console.error('Failed to save layout:', e);
+      return false;
+    }
+  }
+  
+  // Load layout from localStorage
+  loadLayout() {
+    try {
+      const stored = localStorage.getItem(this.layoutStorageKey);
+      if (stored) {
+        this.savedLayout = JSON.parse(stored);
+        return this.savedLayout;
+      }
+    } catch (e) {
+      console.error('Failed to load layout:', e);
+    }
+    return null;
+  }
+  
+  // Apply saved layout to current graph
+  applyLayout(layoutData) {
+    if (!layoutData) return;
+    
+    // Apply transform
+    if (layoutData.transform) {
+      if (this.useCanvas) {
+        this.canvasTransform = { ...layoutData.transform };
+      } else if (this.transform) {
+        this.transform = { ...layoutData.transform };
+        const svg = this.canvas.querySelector('.graph-svg');
+        if (svg) {
+          this.updateTransform(svg, this.transform.scale, this.transform.translateX, this.transform.translateY);
+        }
+      }
+    }
+    
+    // Apply filters
+    if (layoutData.filters) {
+      Object.entries(layoutData.filters).forEach(([type, checked]) => {
+        const checkbox = this.container.querySelector(`.filter-${type}s`);
+        if (checkbox) {
+          checkbox.checked = checked;
+        }
+      });
+      this.activeFilters = layoutData.filters;
+    }
+    
+    // Apply node positions
+    if (layoutData.nodePositions && this.simulation) {
+      Object.entries(layoutData.nodePositions).forEach(([nodeId, position]) => {
+        const simNode = this.simulation.getNodeById(nodeId);
+        if (simNode) {
+          simNode.x = position.x || simNode.x;
+          simNode.y = position.y || simNode.y;
+          // Only apply fixed positions if they were set
+          if (position.fx !== null) simNode.fx = position.fx;
+          if (position.fy !== null) simNode.fy = position.fy;
+        }
+      });
+    }
+  }
+  
+  // Clear saved layout
+  clearLayout() {
+    try {
+      localStorage.removeItem(this.layoutStorageKey);
+      this.savedLayout = null;
+      return true;
+    } catch (e) {
+      console.error('Failed to clear layout:', e);
+      return false;
+    }
+  }
+  
+  // Auto-save with debouncing
+  setupAutoSave() {
+    let saveTimeout;
+    const autoSave = () => {
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(() => {
+        this.saveLayout();
+      }, 1000); // Save 1 second after last change
+    };
+    
+    // Store reference for cleanup
+    this._autoSave = autoSave;
+    return autoSave;
+  }
+  
   // Canvas rendering implementation for 200+ nodes
   renderGraphCanvas(graphData) {
     // Create canvas element
@@ -1380,6 +1560,14 @@ class GraphViewer {
     };
     
     this.simulation = new ForceSimulation(graphData.nodes, graphData.edges, performanceOptions);
+    
+    // Apply saved layout if available
+    if (this.savedLayout) {
+      this.applyLayout(this.savedLayout);
+    }
+    
+    // Set up auto-save
+    this.setupAutoSave();
     
     // Update nodeMap
     this.nodeMap.clear();
@@ -1668,6 +1856,16 @@ class GraphViewer {
           simNode.fx = null;
           simNode.fy = null;
         }
+        
+        // Auto-save layout after dragging
+        if (this._autoSave) {
+          this._autoSave();
+        }
+      }
+      
+      if (isPanning && this._autoSave) {
+        // Auto-save layout after panning
+        this._autoSave();
       }
       
       isDragging = false;
@@ -1712,6 +1910,11 @@ class GraphViewer {
         transform.translateX = mouseX - (mouseX - transform.translateX) * delta;
         transform.translateY = mouseY - (mouseY - transform.translateY) * delta;
         transform.scale = newScale;
+        
+        // Auto-save layout after zoom
+        if (this._autoSave) {
+          this._autoSave();
+        }
       }
     });
   }
@@ -1756,6 +1959,11 @@ class GraphViewer {
       
       // Force redraw
       this.drawCanvas();
+      
+      // Auto-save layout after filter change
+      if (this._autoSave) {
+        this._autoSave();
+      }
     } else {
       // Original SVG filter update code
       const filters = {
@@ -1829,6 +2037,11 @@ class GraphViewer {
       if (this.simulation && visibleNodes > 0) {
         this.simulation.options.alpha = 0.3;
         this.simulation.start();
+      }
+      
+      // Auto-save layout after filter change
+      if (this._autoSave) {
+        this._autoSave();
       }
     }
   }
