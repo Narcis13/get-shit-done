@@ -451,12 +451,101 @@
     .analytics-btn:hover {
       background: #f0f0f0;
     }
+    
+    /* Settings button in top bar */
+    .settings-btn {
+      background: none;
+      border: 1px solid #ddd;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      margin-left: 10px;
+      transition: background-color 0.2s;
+    }
+    
+    .settings-btn:hover {
+      background: #f0f0f0;
+    }
+    
+    /* Settings panel container */
+    .settings-panel-container {
+      position: absolute;
+      top: 40px;
+      right: 0;
+      width: 400px;
+      height: calc(100% - 40px);
+      background: white;
+      box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+      overflow: hidden;
+    }
+    
+    /* Dark theme styles */
+    body.dark-theme {
+      background: #1e1e1e;
+      color: #d4d4d4;
+    }
+    
+    body.dark-theme .top-bar {
+      background: #252526;
+      border-bottom-color: #333;
+    }
+    
+    body.dark-theme .sidebar {
+      background: #252526;
+      border-right-color: #333;
+    }
+    
+    body.dark-theme .editor-panel {
+      background: #1e1e1e;
+    }
+    
+    body.dark-theme .state-panel-container {
+      background: #252526;
+      border-left-color: #333;
+    }
+    
+    body.dark-theme .settings-btn,
+    body.dark-theme .analytics-btn {
+      background: #2d2d30;
+      border-color: #3e3e42;
+      color: #cccccc;
+    }
+    
+    body.dark-theme .settings-btn:hover,
+    body.dark-theme .analytics-btn:hover {
+      background: #333337;
+    }
+    
+    body.dark-theme .editor-textarea {
+      background: #1e1e1e;
+      color: #d4d4d4;
+    }
+    
+    body.dark-theme .line-numbers {
+      background: #252526;
+      color: #5a5a5a;
+      border-right-color: #333;
+    }
+    
+    body.dark-theme .status-bar {
+      background: #252526;
+      border-top-color: #333;
+      color: #cccccc;
+    }
+    
+    body.dark-theme .find-bar {
+      background: #252526;
+      border-bottom-color: #333;
+    }
   </style>
 </head>
 <body>
   <div class="top-bar">
     <div class="project-name">LPL IDE</div>
     <div style="display: flex; align-items: center;">
+      <button class="settings-btn" onclick="toggleSettings()">⚙️ Settings</button>
       <button class="analytics-btn" onclick="showAnalytics()">📊 Analytics</button>
       <div id="connection-status" class="connection-status">Disconnected</div>
     </div>
@@ -471,6 +560,9 @@
     <div class="state-panel-container" id="state-panel-container">
       <!-- State panel will be mounted here -->
     </div>
+    <div class="settings-panel-container" id="settings-panel-container" style="display: none;">
+      <!-- Settings panel will be mounted here -->
+    </div>
   </div>
   <script src="error-boundary.js"></script>
   <script src="async-error-handler.js"></script>
@@ -481,10 +573,113 @@
   <script src="state-panel.js"></script>
   <script src="command-viewer.js"></script>
   <script src="quick-open.js"></script>
+  <script src="settings-panel.js"></script>
   <script>
     // Initialize analytics
     const analytics = new Analytics();
     window.analytics = analytics;
+    
+    // Initialize settings panel
+    const settingsContainer = document.getElementById('settings-panel-container');
+    const settingsPanel = new SettingsPanel(settingsContainer);
+    window.settingsPanel = settingsPanel;
+    
+    // Toggle settings panel
+    function toggleSettings() {
+      const container = document.getElementById('settings-panel-container');
+      const statePanel = document.getElementById('state-panel-container');
+      if (container.style.display === 'none') {
+        container.style.display = 'block';
+        statePanel.style.display = 'none';
+        settingsPanel.open();
+      } else {
+        container.style.display = 'none';
+        statePanel.style.display = 'block';
+        settingsPanel.close();
+      }
+    }
+    
+    // Listen for settings changes
+    document.addEventListener('settings-changed', (event) => {
+      const settings = event.detail;
+      
+      // Apply editor settings
+      if (window.editor) {
+        // Update editor font size and line height
+        const editorTextarea = document.querySelector('.editor-textarea');
+        const lineNumbers = document.querySelector('.line-numbers');
+        const highlightLayer = document.querySelector('.highlight-layer');
+        
+        if (editorTextarea) {
+          editorTextarea.style.fontSize = settings.editor.fontSize + 'px';
+          editorTextarea.style.lineHeight = settings.editor.lineHeight + 'px';
+          editorTextarea.style.fontFamily = settings.appearance.fontFamily;
+          
+          // Update word wrap
+          editorTextarea.style.whiteSpace = settings.editor.wordWrap ? 'pre-wrap' : 'pre';
+          editorTextarea.wrap = settings.editor.wordWrap ? 'soft' : 'off';
+        }
+        
+        if (lineNumbers) {
+          lineNumbers.style.fontSize = settings.editor.fontSize + 'px';
+          lineNumbers.style.lineHeight = settings.editor.lineHeight + 'px';
+          lineNumbers.style.display = settings.editor.showLineNumbers ? 'block' : 'none';
+        }
+        
+        if (highlightLayer) {
+          highlightLayer.style.fontSize = settings.editor.fontSize + 'px';
+          highlightLayer.style.lineHeight = settings.editor.lineHeight + 'px';
+          highlightLayer.style.fontFamily = settings.appearance.fontFamily;
+        }
+        
+        // Update line number heights
+        const lineNumberElements = document.querySelectorAll('.line-number');
+        lineNumberElements.forEach(el => {
+          el.style.height = settings.editor.lineHeight + 'px';
+        });
+        
+        // Update editor settings
+        window.editor.saveDebounceTime = settings.editor.autoSaveDelay;
+        window.editor.tabSize = settings.editor.tabSize;
+        
+        // Update tab behavior
+        const originalInsertAtCursor = window.editor.insertAtCursor;
+        window.editor.insertAtCursor = function(text) {
+          if (text === '  ') { // Tab key
+            const spaces = ' '.repeat(settings.editor.tabSize);
+            originalInsertAtCursor.call(this, spaces);
+          } else {
+            originalInsertAtCursor.call(this, text);
+          }
+        };
+      }
+      
+      // Apply appearance settings
+      const sidebar = document.querySelector('.sidebar');
+      const mainContent = document.querySelector('.main-content');
+      const statePanelContainer = document.querySelector('.state-panel-container');
+      
+      if (sidebar && mainContent && statePanelContainer) {
+        mainContent.style.gridTemplateColumns = `${settings.appearance.sidebarWidth}px auto ${settings.appearance.statePanelWidth}px`;
+      }
+      
+      // Apply theme
+      if (settings.editor.theme === 'dark' || 
+          (settings.editor.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.body.classList.add('dark-theme');
+      } else {
+        document.body.classList.remove('dark-theme');
+      }
+      
+      // Apply behavior settings
+      if (window.fileTree) {
+        // Update file tree double-click behavior
+        window.fileTree.doubleClickToOpen = settings.behavior.doubleClickToOpen;
+      }
+    });
+    
+    // Apply settings on load
+    document.dispatchEvent(new CustomEvent('settings-changed', { detail: settingsPanel.settings }));
     
     // Show analytics summary
     function showAnalytics() {
