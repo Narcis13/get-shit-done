@@ -1,3 +1,123 @@
+// Simple Quadtree implementation for spatial indexing
+class Quadtree {
+  constructor(x, y, width, height, maxDepth = 5, maxObjects = 10) {
+    this.bounds = { x, y, width, height };
+    this.maxDepth = maxDepth;
+    this.maxObjects = maxObjects;
+    this.objects = [];
+    this.nodes = null;
+    this.depth = 0;
+  }
+  
+  clear() {
+    this.objects = [];
+    if (this.nodes) {
+      for (let i = 0; i < 4; i++) {
+        this.nodes[i].clear();
+      }
+      this.nodes = null;
+    }
+  }
+  
+  split() {
+    const { x, y, width, height } = this.bounds;
+    const subWidth = width / 2;
+    const subHeight = height / 2;
+    
+    this.nodes = [
+      new Quadtree(x, y, subWidth, subHeight, this.maxDepth, this.maxObjects),
+      new Quadtree(x + subWidth, y, subWidth, subHeight, this.maxDepth, this.maxObjects),
+      new Quadtree(x, y + subHeight, subWidth, subHeight, this.maxDepth, this.maxObjects),
+      new Quadtree(x + subWidth, y + subHeight, subWidth, subHeight, this.maxDepth, this.maxObjects)
+    ];
+    
+    for (let i = 0; i < 4; i++) {
+      this.nodes[i].depth = this.depth + 1;
+    }
+  }
+  
+  getQuadrant(obj) {
+    const { x, y, width, height } = this.bounds;
+    const midX = x + width / 2;
+    const midY = y + height / 2;
+    
+    const inTop = obj.y < midY;
+    const inLeft = obj.x < midX;
+    
+    if (inTop) {
+      return inLeft ? 0 : 1;
+    } else {
+      return inLeft ? 2 : 3;
+    }
+  }
+  
+  insert(obj) {
+    if (this.nodes) {
+      const quadrant = this.getQuadrant(obj);
+      this.nodes[quadrant].insert(obj);
+      return;
+    }
+    
+    this.objects.push(obj);
+    
+    if (this.objects.length > this.maxObjects && this.depth < this.maxDepth) {
+      if (!this.nodes) {
+        this.split();
+      }
+      
+      const remainingObjects = [];
+      for (const o of this.objects) {
+        const quadrant = this.getQuadrant(o);
+        this.nodes[quadrant].insert(o);
+      }
+      this.objects = remainingObjects;
+    }
+  }
+  
+  retrieve(obj, found = []) {
+    if (!this.nodes) {
+      return [...found, ...this.objects];
+    }
+    
+    const quadrant = this.getQuadrant(obj);
+    found = this.nodes[quadrant].retrieve(obj, found);
+    
+    return found;
+  }
+  
+  // Get all objects within a radius of a point
+  queryRadius(x, y, radius, found = []) {
+    const { x: bx, y: by, width: bw, height: bh } = this.bounds;
+    
+    // Check if circle intersects with quadrant bounds
+    const closestX = Math.max(bx, Math.min(x, bx + bw));
+    const closestY = Math.max(by, Math.min(y, by + bh));
+    const distanceSquared = (x - closestX) ** 2 + (y - closestY) ** 2;
+    
+    if (distanceSquared > radius ** 2) {
+      return found; // Circle doesn't intersect quadrant
+    }
+    
+    // Check objects in this quadrant
+    for (const obj of this.objects) {
+      const dx = obj.x - x;
+      const dy = obj.y - y;
+      if (dx * dx + dy * dy <= radius * radius) {
+        found.push(obj);
+      }
+    }
+    
+    // Check child quadrants
+    if (this.nodes) {
+      for (let i = 0; i < 4; i++) {
+        this.nodes[i].queryRadius(x, y, radius, found);
+      }
+    }
+    
+    return found;
+  }
+}
+
 // Force simulation implementation (zero-dependency)
 class ForceSimulation {
   constructor(nodes, edges, options) {
@@ -36,6 +156,10 @@ class ForceSimulation {
     this.nodes.forEach(node => {
       this.nodeMap.set(node.id, node);
     });
+    
+    // Initialize quadtree for 100+ nodes
+    this.useQuadtree = nodes.length > 100;
+    this.quadtree = null;
   }
   
   on(event, listener) {
@@ -121,40 +245,77 @@ class ForceSimulation {
     const theta = 0.9; // Barnes-Hut approximation parameter
     const maxDistance = 300; // Ignore nodes beyond this distance for performance
     
+    // Build quadtree for 100+ nodes
+    if (this.useQuadtree) {
+      // Build quadtree from current node positions
+      this.quadtree = new Quadtree(0, 0, this.options.width, this.options.height);
+      this.nodes.forEach(node => {
+        this.quadtree.insert(node);
+      });
+    }
+    
     // Use spatial optimization for large graphs
     if (this.nodes.length > 50) {
-      // Apply Barnes-Hut-like optimization
+      // Apply Barnes-Hut-like optimization with quadtree for 100+ nodes
       for (let i = 0; i < this.nodes.length; i++) {
         const nodeA = this.nodes[i];
         
-        for (let j = i + 1; j < this.nodes.length; j++) {
-          const nodeB = this.nodes[j];
+        if (this.useQuadtree) {
+          // Use quadtree to find nearby nodes efficiently
+          const nearbyNodes = this.quadtree.queryRadius(nodeA.x, nodeA.y, maxDistance);
           
-          const dx = nodeB.x - nodeA.x;
-          const dy = nodeB.y - nodeA.y;
-          const distanceSq = dx * dx + dy * dy;
-          
-          // Skip if nodes are too far apart (performance optimization)
-          if (distanceSq > maxDistance * maxDistance) continue;
-          
-          const distance = Math.sqrt(distanceSq);
-          
-          if (distance > 0) {
-            const force = charge * this.options.alpha / distanceSq;
-            const fx = force * dx / distance;
-            const fy = force * dy / distance;
+          for (const nodeB of nearbyNodes) {
+            if (nodeA === nodeB) continue;
             
-            if (nodeA.fx === null) {
-              nodeA.vx -= fx;
+            const dx = nodeB.x - nodeA.x;
+            const dy = nodeB.y - nodeA.y;
+            const distanceSq = dx * dx + dy * dy;
+            const distance = Math.sqrt(distanceSq);
+            
+            if (distance > 0 && distance < maxDistance) {
+              const force = charge * this.options.alpha / distanceSq;
+              const fx = force * dx / distance;
+              const fy = force * dy / distance;
+              
+              if (nodeA.fx === null) {
+                nodeA.vx -= fx;
+              }
+              if (nodeA.fy === null) {
+                nodeA.vy -= fy;
+              }
             }
-            if (nodeA.fy === null) {
-              nodeA.vy -= fy;
-            }
-            if (nodeB.fx === null) {
-              nodeB.vx += fx;
-            }
-            if (nodeB.fy === null) {
-              nodeB.vy += fy;
+          }
+        } else {
+          // Standard optimization for 50-100 nodes
+          for (let j = i + 1; j < this.nodes.length; j++) {
+            const nodeB = this.nodes[j];
+            
+            const dx = nodeB.x - nodeA.x;
+            const dy = nodeB.y - nodeA.y;
+            const distanceSq = dx * dx + dy * dy;
+            
+            // Skip if nodes are too far apart (performance optimization)
+            if (distanceSq > maxDistance * maxDistance) continue;
+            
+            const distance = Math.sqrt(distanceSq);
+            
+            if (distance > 0) {
+              const force = charge * this.options.alpha / distanceSq;
+              const fx = force * dx / distance;
+              const fy = force * dy / distance;
+              
+              if (nodeA.fx === null) {
+                nodeA.vx -= fx;
+              }
+              if (nodeA.fy === null) {
+                nodeA.vy -= fy;
+              }
+              if (nodeB.fx === null) {
+                nodeB.vx += fx;
+              }
+              if (nodeB.fy === null) {
+                nodeB.vy += fy;
+              }
             }
           }
         }
@@ -276,6 +437,16 @@ class GraphViewer {
       lastRenderTime: 0,
       avgRenderTime: 0,
       renderTimes: []
+    };
+    
+    // Performance optimizations for large graphs
+    this.useQuadtree = false; // Enable for 100+ nodes
+    this.quadtree = null;
+    this.levelOfDetail = {
+      enabled: false,
+      minZoomForLabels: 0.5,
+      minZoomForEdges: 0.3,
+      simplifyEdges: false
     };
     
     this.setupHTML();
@@ -692,6 +863,14 @@ class GraphViewer {
       alphaMin: nodeCount > 100 ? 0.01 : 0.001
     };
     
+    // Enable level of detail optimizations for 100+ nodes
+    if (nodeCount > 100) {
+      this.levelOfDetail.enabled = true;
+      this.levelOfDetail.minZoomForLabels = 0.6;
+      this.levelOfDetail.minZoomForEdges = 0.4;
+      this.levelOfDetail.simplifyEdges = true;
+    }
+    
     this.simulation = new ForceSimulation(graphData.nodes, graphData.edges, performanceOptions);
     
     // Create edge elements
@@ -802,25 +981,46 @@ class GraphViewer {
       const nodeCount = nodes.length;
       let visibleNodes = 0;
       let visibleEdges = 0;
+      const currentScale = this.transform?.scale || 1;
+      
+      // Level of detail: skip edge rendering at low zoom for 100+ nodes
+      const shouldRenderEdges = !this.levelOfDetail.enabled || 
+                               currentScale >= this.levelOfDetail.minZoomForEdges;
       
       // Update edge positions
-      edges.forEach(({ element, data }) => {
-        const source = this.simulation.getNodeById(data.source);
-        const target = this.simulation.getNodeById(data.target);
-        if (source && target) {
-          // Only update if at least one endpoint is in viewport
-          if (isInViewport(source, bounds) || isInViewport(target, bounds)) {
-            element.setAttribute('x1', source.x);
-            element.setAttribute('y1', source.y);
-            element.setAttribute('x2', target.x);
-            element.setAttribute('y2', target.y);
-            element.style.display = '';
-            visibleEdges++;
-          } else {
-            element.style.display = 'none';
+      if (shouldRenderEdges) {
+        edges.forEach(({ element, data }) => {
+          const source = this.simulation.getNodeById(data.source);
+          const target = this.simulation.getNodeById(data.target);
+          if (source && target) {
+            // Only update if at least one endpoint is in viewport
+            if (isInViewport(source, bounds) || isInViewport(target, bounds)) {
+              // Simplify edge rendering for 100+ nodes at medium zoom
+              if (this.levelOfDetail.simplifyEdges && nodeCount > 100 && currentScale < 0.8) {
+                // Use integer coordinates for performance
+                element.setAttribute('x1', Math.round(source.x));
+                element.setAttribute('y1', Math.round(source.y));
+                element.setAttribute('x2', Math.round(target.x));
+                element.setAttribute('y2', Math.round(target.y));
+              } else {
+                element.setAttribute('x1', source.x);
+                element.setAttribute('y1', source.y);
+                element.setAttribute('x2', target.x);
+                element.setAttribute('y2', target.y);
+              }
+              element.style.display = '';
+              visibleEdges++;
+            } else {
+              element.style.display = 'none';
+            }
           }
-        }
-      });
+        });
+      } else {
+        // Hide all edges at very low zoom levels
+        edges.forEach(({ element }) => {
+          element.style.display = 'none';
+        });
+      }
       
       // Update node positions
       nodes.forEach(({ element, data }) => {
@@ -831,10 +1031,12 @@ class GraphViewer {
             element.style.display = '';
             visibleNodes++;
             
-            // Performance: hide text labels for large graphs when zoomed out
+            // Level of detail: hide text labels based on zoom and node count
             const textElement = element.querySelector('text');
-            if (textElement && nodeCount > 50) {
-              textElement.style.display = this.transform.scale < 0.5 ? 'none' : '';
+            if (textElement) {
+              const hideLabels = (this.levelOfDetail.enabled && currentScale < this.levelOfDetail.minZoomForLabels) ||
+                               (nodeCount > 50 && currentScale < 0.5);
+              textElement.style.display = hideLabels ? 'none' : '';
             }
           } else {
             element.style.display = 'none';
@@ -1003,6 +1205,9 @@ class GraphViewer {
     
     const zoomGroup = svg.querySelector('.zoom-group');
     zoomGroup.setAttribute('transform', `translate(${translateX}, ${translateY}) scale(${scale})`);
+    
+    // Store transform for viewport culling calculations
+    this.transform = { scale, translateX, translateY };
   }
 
   onNodeClick(node) {
@@ -1073,6 +1278,42 @@ class GraphViewer {
       document.removeEventListener('mousemove', this._tooltipMouseMoveHandler);
       this._tooltipMouseMoveHandler = null;
     }
+  }
+  
+  // Get performance statistics
+  getPerformanceStats() {
+    return {
+      ...this.performanceStats,
+      quadtreeEnabled: this.simulation?.useQuadtree || false,
+      levelOfDetailEnabled: this.levelOfDetail.enabled,
+      optimizationsActive: {
+        quadtree: this.simulation?.useQuadtree || false,
+        levelOfDetail: this.levelOfDetail.enabled,
+        viewportCulling: true,
+        batchedUpdates: true,
+        simplifiedEdges: this.levelOfDetail.simplifyEdges
+      },
+      recommendations: this.getPerformanceRecommendations()
+    };
+  }
+  
+  getPerformanceRecommendations() {
+    const recommendations = [];
+    const nodeCount = this.performanceStats.nodeCount;
+    
+    if (nodeCount > 200) {
+      recommendations.push('Consider using canvas rendering instead of SVG for 200+ nodes');
+    }
+    
+    if (this.performanceStats.avgRenderTime > 16) {
+      recommendations.push('Average render time exceeds 16ms - consider reducing visible nodes');
+    }
+    
+    if (nodeCount > 100 && !this.levelOfDetail.enabled) {
+      recommendations.push('Enable level of detail optimizations for better performance');
+    }
+    
+    return recommendations;
   }
 }
 
