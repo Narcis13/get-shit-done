@@ -452,6 +452,8 @@
       <!-- State panel will be mounted here -->
     </div>
   </div>
+  <script src="error-boundary.js"></script>
+  <script src="async-error-handler.js"></script>
   <script src="app.js"></script>
   <script src="file-tree.js"></script>
   <script src="editor.js"></script>
@@ -459,23 +461,36 @@
   <script src="command-viewer.js"></script>
   <script src="quick-open.js"></script>
   <script>
-    // Initialize file tree
+    // Initialize components with error boundaries
+    
+    // Initialize file tree with error boundary
     const sidebarElement = document.querySelector('.sidebar');
-    const fileTree = new FileTree(sidebarElement);
-    window.fileTree = fileTree;
+    const fileTreeBoundary = new ErrorBoundary(sidebarElement, 'FileTree');
+    const fileTree = fileTreeBoundary.wrap((container) => {
+      const ft = new FileTree(container);
+      window.fileTree = ft;
+      return ft;
+    });
     
-    // Initialize editor
+    // Initialize editor with error boundary
     const editorPanel = document.getElementById('editor-panel');
-    const editor = new MarkdownEditor(editorPanel);
-    window.editor = editor;
-
-    // Test the editor with a sample file
-    editor.loadFile('test.md', '# Test Markdown\n\nThis is a test file for the find functionality.\n\nTry pressing Cmd/Ctrl+F to open the find bar.');
+    const editorBoundary = new ErrorBoundary(editorPanel, 'MarkdownEditor');
+    const editor = editorBoundary.wrap((container) => {
+      const ed = new MarkdownEditor(container);
+      window.editor = ed;
+      // Test the editor with a sample file
+      ed.loadFile('test.md', '# Test Markdown\n\nThis is a test file for the find functionality.\n\nTry pressing Cmd/Ctrl+F to open the find bar.');
+      return ed;
+    });
     
-    // Initialize state panel
+    // Initialize state panel with error boundary
     const statePanelContainer = document.getElementById('state-panel-container');
-    const statePanel = new StatePanel(statePanelContainer);
-    window.statePanel = statePanel;
+    const statePanelBoundary = new ErrorBoundary(statePanelContainer, 'StatePanel');
+    const statePanel = statePanelBoundary.wrap((container) => {
+      const sp = new StatePanel(container);
+      window.statePanel = sp;
+      return sp;
+    });
     
     // Load file tree after API is ready
     setTimeout(() => {

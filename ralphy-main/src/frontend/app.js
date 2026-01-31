@@ -94,7 +94,7 @@ class OperationQueue {
   async executeOperation(operation) {
     switch (operation.type) {
       case 'saveFile':
-        const saveResponse = await fetch(`/api/file?path=${encodeURIComponent(operation.path)}`, {
+        const saveResponse = await asyncErrorHandler.wrapFetch(`/api/file?path=${encodeURIComponent(operation.path)}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'text/plain'
@@ -120,7 +120,7 @@ class OperationQueue {
           headers['If-None-Match'] = cachedEtag;
         }
         
-        const loadResponse = await fetch(`/api/file?path=${encodeURIComponent(operation.path)}`, {
+        const loadResponse = await asyncErrorHandler.wrapFetch(`/api/file?path=${encodeURIComponent(operation.path)}`, {
           headers
         });
         
@@ -145,7 +145,7 @@ class OperationQueue {
         return { cached: false, content };
         
       case 'loadTree':
-        const treeResponse = await fetch('/api/tree');
+        const treeResponse = await asyncErrorHandler.wrapFetch('/api/tree');
         
         if (!treeResponse.ok) {
           throw new Error(`Failed to load tree: ${treeResponse.status}`);
@@ -154,7 +154,7 @@ class OperationQueue {
         return await treeResponse.json();
         
       case 'loadState':
-        const stateResponse = await fetch('/api/state');
+        const stateResponse = await asyncErrorHandler.wrapFetch('/api/state');
         
         if (!stateResponse.ok) {
           throw new Error(`Failed to load state: ${stateResponse.status}`);
@@ -318,23 +318,32 @@ class API {
 
   // Helper to execute or queue operation based on connection status
   async executeOrQueue(operation) {
-    if (this.sseClient.isConnected) {
-      // Try to execute immediately
-      try {
-        const queue = this.sseClient.getOperationQueue();
-        return await queue.executeOperation(operation);
-      } catch (error) {
-        // If immediate execution fails, queue the operation
-        console.warn(`Failed to execute operation immediately, queueing: ${operation.type}`, error);
-        this.sseClient.queueOperation(operation);
-        throw error;
-      }
-    } else {
-      // Not connected, queue the operation
-      console.log(`Queueing operation while disconnected: ${operation.type}`);
-      this.sseClient.queueOperation(operation);
-      throw new Error('Operation queued - currently disconnected');
-    }
+    // Wrap with async error handler
+    const wrappedExecute = asyncErrorHandler.wrapAsync(
+      async () => {
+        if (this.sseClient.isConnected) {
+          // Try to execute immediately
+          try {
+            const queue = this.sseClient.getOperationQueue();
+            return await queue.executeOperation(operation);
+          } catch (error) {
+            // If immediate execution fails, queue the operation
+            console.warn(`Failed to execute operation immediately, queueing: ${operation.type}`, error);
+            this.sseClient.queueOperation(operation);
+            throw error;
+          }
+        } else {
+          // Not connected, queue the operation
+          console.log(`Queueing operation while disconnected: ${operation.type}`);
+          this.sseClient.queueOperation(operation);
+          throw new Error('Operation queued - currently disconnected');
+        }
+      },
+      'API',
+      operation.type
+    );
+    
+    return await wrappedExecute();
   }
 
   async saveFile(path, content, options = {}) {
