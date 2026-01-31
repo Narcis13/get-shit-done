@@ -28,7 +28,7 @@ class FileTree {
       <div class="file-tree" role="tree" aria-label="File explorer">
         <div class="file-tree-header">
           <h3 id="file-tree-heading">Files</h3>
-          <button class="refresh-btn" title="Refresh file tree" aria-label="Refresh file tree">↻</button>
+          <button class="refresh-btn" role="button" title="Refresh file tree" aria-label="Refresh file tree">↻</button>
         </div>
         <div class="file-tree-search">
           <input type="text" placeholder="Search files..." class="file-search-input" aria-label="Search files" role="searchbox">

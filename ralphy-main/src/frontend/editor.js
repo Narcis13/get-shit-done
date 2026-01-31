@@ -39,19 +39,19 @@ class MarkdownEditor {
           <div class="find-controls">
             <input type="text" id="find-input" placeholder="Find..." class="find-input" aria-label="Find text" role="searchbox">
             <span class="find-results" aria-live="polite" aria-atomic="true">0/0</span>
-            <button class="find-prev" title="Previous match (Shift+Enter)" aria-label="Previous match">↑</button>
-            <button class="find-next" title="Next match (Enter)" aria-label="Next match">↓</button>
+            <button class="find-prev" role="button" title="Previous match (Shift+Enter)" aria-label="Previous match">↑</button>
+            <button class="find-next" role="button" title="Next match (Enter)" aria-label="Next match">↓</button>
             <label class="regex-toggle">
-              <input type="checkbox" id="regex-checkbox" aria-label="Use regular expressions">
+              <input type="checkbox" id="regex-checkbox" role="checkbox" aria-checked="false" aria-label="Use regular expressions">
               <span title="Use regular expressions">.*</span>
             </label>
-            <button class="replace-toggle" title="Toggle replace" aria-label="Toggle replace mode" aria-expanded="false">▼</button>
-            <button class="find-close" title="Close (Esc)" aria-label="Close find and replace">×</button>
+            <button class="replace-toggle" role="button" title="Toggle replace" aria-label="Toggle replace mode" aria-expanded="false">▼</button>
+            <button class="find-close" role="button" title="Close (Esc)" aria-label="Close find and replace">×</button>
           </div>
           <div class="replace-controls" id="replace-controls" style="display: none;">
             <input type="text" id="replace-input" placeholder="Replace..." class="replace-input" aria-label="Replace text">
-            <button class="replace-current" title="Replace current match" aria-label="Replace current match">Replace</button>
-            <button class="replace-all" title="Replace all matches" aria-label="Replace all matches">Replace All</button>
+            <button class="replace-current" role="button" title="Replace current match" aria-label="Replace current match">Replace</button>
+            <button class="replace-all" role="button" title="Replace all matches" aria-label="Replace all matches">Replace All</button>
           </div>
         </div>
         <div class="editor-content">
@@ -66,7 +66,7 @@ class MarkdownEditor {
           <span class="vim-mode-indicator" aria-live="polite" aria-atomic="true"></span>
           <span class="save-status" aria-live="polite" aria-atomic="true">Ready</span>
           <label class="vim-toggle">
-            <input type="checkbox" id="vim-checkbox" aria-label="Toggle Vim mode">
+            <input type="checkbox" id="vim-checkbox" role="checkbox" aria-checked="false" aria-label="Toggle Vim mode">
             <span>Vim</span>
           </label>
         </div>
@@ -94,6 +94,7 @@ class MarkdownEditor {
     
     // Vim mode toggle
     this.vimCheckbox.addEventListener('change', () => {
+      this.vimCheckbox.setAttribute('aria-checked', this.vimCheckbox.checked ? 'true' : 'false');
       this.toggleVimMode();
     });
     
@@ -123,6 +124,7 @@ class MarkdownEditor {
     // Regex toggle
     this.regexCheckbox.addEventListener('change', () => {
       this.useRegex = this.regexCheckbox.checked;
+      this.regexCheckbox.setAttribute('aria-checked', this.useRegex ? 'true' : 'false');
       this.performFind();
     });
 

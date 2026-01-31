@@ -98,7 +98,7 @@
       cursor: pointer;
     }
     
-    .graph-filters input[type="checkbox"] {
+    .graph-filters input[type="checkbox"][role="switch"] {
       margin-right: 5px;
       cursor: pointer;
     }
@@ -186,7 +186,7 @@
       gap: 10px;
     }
     
-    .graph-layout-controls button {
+    .graph-layout-controls button[role="button"] {
       padding: 6px 12px;
       border: 1px solid #ddd;
       background: #fff;
@@ -196,12 +196,12 @@
       transition: background-color 0.2s, border-color 0.2s;
     }
     
-    .graph-layout-controls button:hover {
+    .graph-layout-controls button[role="button"]:hover {
       background: #f5f5f5;
       border-color: #ccc;
     }
     
-    .graph-layout-controls button:active {
+    .graph-layout-controls button[role="button"]:active {
       background: #e0e0e0;
     }
     
@@ -558,8 +558,8 @@
   <div class="top-bar" role="banner">
     <div class="project-name" role="heading" aria-level="1">LPL IDE</div>
     <div style="display: flex; align-items: center;">
-      <button class="settings-btn" onclick="toggleSettings()" aria-label="Open settings panel" title="Open settings panel">⚙️ Settings</button>
-      <button class="analytics-btn" onclick="showAnalytics()" aria-label="Show analytics summary" title="Show analytics summary">📊 Analytics</button>
+      <button class="settings-btn" onclick="toggleSettings()" role="button" aria-label="Open settings panel" title="Open settings panel">⚙️ Settings</button>
+      <button class="analytics-btn" onclick="showAnalytics()" role="button" aria-label="Show analytics summary" title="Show analytics summary">📊 Analytics</button>
       <div id="connection-status" class="connection-status" role="status" aria-live="polite" aria-label="Connection status">Disconnected</div>
     </div>
   </div>

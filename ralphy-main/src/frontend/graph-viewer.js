@@ -471,15 +471,15 @@ class GraphViewer {
         <div class="graph-header">
           <h2 id="graph-heading">System Graph <span class="node-count" aria-live="polite" aria-atomic="true"></span></h2>
           <div class="graph-filters" role="group" aria-label="Filter graph nodes by type">
-            <label><input type="checkbox" class="filter-commands" checked aria-label="Show command nodes"> Commands</label>
-            <label><input type="checkbox" class="filter-workflows" checked aria-label="Show workflow nodes"> Workflows</label>
-            <label><input type="checkbox" class="filter-agents" checked aria-label="Show agent nodes"> Agents</label>
-            <label><input type="checkbox" class="filter-templates" checked aria-label="Show template nodes"> Templates</label>
+            <label><input type="checkbox" class="filter-commands" checked role="switch" aria-checked="true" aria-label="Show command nodes"> Commands</label>
+            <label><input type="checkbox" class="filter-workflows" checked role="switch" aria-checked="true" aria-label="Show workflow nodes"> Workflows</label>
+            <label><input type="checkbox" class="filter-agents" checked role="switch" aria-checked="true" aria-label="Show agent nodes"> Agents</label>
+            <label><input type="checkbox" class="filter-templates" checked role="switch" aria-checked="true" aria-label="Show template nodes"> Templates</label>
           </div>
           <input type="text" class="graph-search" placeholder="Search nodes..." aria-label="Search graph nodes" role="searchbox">
           <div class="graph-layout-controls" role="group" aria-label="Graph layout controls">
-            <button class="btn-save-layout" title="Save current layout" aria-label="Save current graph layout">Save Layout</button>
-            <button class="btn-reset-layout" title="Reset to default layout" aria-label="Reset graph to default layout">Reset Layout</button>
+            <button class="btn-save-layout" role="button" title="Save current layout" aria-label="Save current graph layout">Save Layout</button>
+            <button class="btn-reset-layout" role="button" title="Reset to default layout" aria-label="Reset graph to default layout">Reset Layout</button>
           </div>
         </div>
         <div class="graph-canvas" role="img" aria-labelledby="graph-heading"></div>
@@ -494,7 +494,10 @@ class GraphViewer {
     // Filter checkboxes
     const filterCheckboxes = this.container.querySelectorAll('[type="checkbox"]');
     filterCheckboxes.forEach(checkbox => {
-      checkbox.addEventListener('change', () => this.updateFilters());
+      checkbox.addEventListener('change', () => {
+        checkbox.setAttribute('aria-checked', checkbox.checked ? 'true' : 'false');
+        this.updateFilters();
+      });
     });
 
     // Search input
